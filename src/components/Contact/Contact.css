@@ -3,9 +3,7 @@
     padding-top: 120px;
     padding-bottom: 60px;
     min-height: calc(100vh - 60px);
-    background-image: linear-gradient(to bottom left,
-            rgba(17, 16, 16, 0.7),
-            rgba(6, 0, 16, 0.95));
+    background-image: var(--section-background-color) !important;
 }
 
 .contact-container {

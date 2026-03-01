@@ -65,9 +65,7 @@ function Contact() {
                         <div className="contact-info-card">
                             <h3>Let's talk</h3>
                             <p>
-                                I'm currently <span className="open-badge">Open to Work</span> and
-                                looking for full-time or freelance opportunities. Whether you have a
-                                question or just want to check in, I'll do my best to get back to you!
+                                Whether you have a project in mind, a technical question, or just want to check in and say hi, my inbox is always open. I'll do my best to get back to you!
                             </p>
                             <div className="contact-links">
                                 <a href="mailto:guruthedev20@gmail.com" className="contact-link-item">

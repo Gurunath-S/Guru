@@ -2,14 +2,8 @@ import React, { useState, useEffect } from "react";
 import Navbar from "react-bootstrap/Navbar";
 import Nav from "react-bootstrap/Nav";
 import Container from "react-bootstrap/Container";
-import { NavLink } from "react-router-dom";
-import {
-  AiOutlineHome,
-  AiOutlineFundProjectionScreen,
-  AiOutlineUser,
-  AiOutlineMail,
-} from "react-icons/ai";
-import { CgFileDocument } from "react-icons/cg";
+
+
 
 function NavBar() {
   const [expand, updateExpanded] = useState(false);
@@ -51,29 +45,23 @@ function NavBar() {
         <Navbar.Collapse id="responsive-navbar-nav">
           <Nav className="ms-auto" defaultActiveKey="#home">
             <Nav.Item>
-              <Nav.Link as={NavLink} to="/" onClick={() => updateExpanded(false)}>
-                <AiOutlineHome style={{ marginBottom: "2px" }} /> Home
+              <Nav.Link href="#home" onClick={() => updateExpanded(false)}>
+                Home
               </Nav.Link>
             </Nav.Item>
             <Nav.Item>
-              <Nav.Link as={NavLink} to="/about" onClick={() => updateExpanded(false)}>
-                <AiOutlineUser style={{ marginBottom: "2px" }} /> About
+              <Nav.Link href="#about" onClick={() => updateExpanded(false)}>
+                About
               </Nav.Link>
             </Nav.Item>
             <Nav.Item>
-              <Nav.Link as={NavLink} to="/project" onClick={() => updateExpanded(false)}>
-                <AiOutlineFundProjectionScreen style={{ marginBottom: "2px" }} />{" "}
+              <Nav.Link href="#projects" onClick={() => updateExpanded(false)}>
                 Projects
               </Nav.Link>
             </Nav.Item>
             <Nav.Item>
-              <Nav.Link as={NavLink} to="/resume" onClick={() => updateExpanded(false)}>
-                <CgFileDocument style={{ marginBottom: "2px" }} /> Resume
-              </Nav.Link>
-            </Nav.Item>
-            <Nav.Item>
-              <Nav.Link as={NavLink} to="/contact" onClick={() => updateExpanded(false)}>
-                <AiOutlineMail style={{ marginBottom: "2px" }} /> Contact
+              <Nav.Link href="#contact" onClick={() => updateExpanded(false)}>
+                Contact
               </Nav.Link>
             </Nav.Item>
           </Nav>

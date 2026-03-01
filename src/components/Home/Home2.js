@@ -1,6 +1,7 @@
 import React from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import myImg from "../../Assets/avatar.svg";
+import { ImPointRight } from "react-icons/im";
 import Tilt from "react-parallax-tilt";
 import { AiFillGithub } from "react-icons/ai";
 import { FaLinkedinIn } from "react-icons/fa";
@@ -17,10 +18,17 @@ function Home2() {
               LET ME <span className="purple"> INTRODUCE </span> MYSELF
             </h1>
             <p className="home-about-body">
+              Hi Everyone, I am <span className="purple">Gurunath S </span>
+              from <span className="purple">Tirupur, India.</span>
+              <br />
+              <br />
               I fell in love with programming and have built a lot of exciting
               things along the way! 🚀
               <br />
-              <br />I am fluent in
+              <br />I hold a <span className="purple">Bachelor's degree in Computer Science</span> and have recently completed my <span className="purple">Master of Computer Applications (MCA)</span>. During this time, I gained in-depth knowledge in Web Development, Database Management, and Software Engineering.
+              <br />
+              <br />
+              I am fluent in
               <i>
                 <b className="purple">  Python, JavaScript and Java </b>
               </i>
@@ -47,7 +55,21 @@ function Home2() {
                 <b className="purple"> React.js and Expo Router.</b>
               </i>{" "}
               I also work with Firebase, MongoDB, and Clerk for authentication and backend services.
+              <br />
+              <br />
+              Apart from coding, some other activities that I love to do include:
             </p>
+            <ul style={{ listStyleType: "none", paddingLeft: "15px", fontSize: "1.2em", color: "white" }}>
+              <li className="about-activity">
+                <ImPointRight /> Watching Football & Exploring Tactical Analysis
+              </li>
+              <li className="about-activity">
+                <ImPointRight /> Exploring New Tech & AI Tools
+              </li>
+              <li className="about-activity">
+                <ImPointRight /> Watching Movies & Listening to Music
+              </li>
+            </ul>
           </Col>
           <Col md={4} className="myAvtar">
             <Tilt>

@@ -5,39 +5,13 @@ import Home from "./components/Home/Home";
 import About from "./components/About/About";
 import Projects from "./components/Projects/Projects";
 import Footer from "./components/Footer";
-import Resume from "./components/Resume/ResumeNew";
 import Contact from "./components/Contact/Contact";
 import Cursor from "./components/Cursor";
 import BackToTop from "./components/BackToTop";
-import PageTransition from "./components/PageTransition";
-import {
-  BrowserRouter as Router,
-  Route,
-  Routes,
-  Navigate,
-  useLocation,
-} from "react-router-dom";
-import { AnimatePresence } from "framer-motion";
-import ScrollToTop from "./components/ScrollToTop";
+
 import "./style.css";
 import "./App.css";
 import "bootstrap/dist/css/bootstrap.min.css";
-
-function AnimatedRoutes() {
-  const location = useLocation();
-  return (
-    <AnimatePresence mode="wait">
-      <Routes location={location} key={location.pathname}>
-        <Route path="/" element={<PageTransition><Home /></PageTransition>} />
-        <Route path="/project" element={<PageTransition><Projects /></PageTransition>} />
-        <Route path="/about" element={<PageTransition><About /></PageTransition>} />
-        <Route path="/resume" element={<PageTransition><Resume /></PageTransition>} />
-        <Route path="/contact" element={<PageTransition><Contact /></PageTransition>} />
-        <Route path="*" element={<Navigate to="/" />} />
-      </Routes>
-    </AnimatePresence>
-  );
-}
 
 function App() {
   const [load, updateLoad] = useState(true);
@@ -50,19 +24,21 @@ function App() {
   }, []);
 
   return (
-    <Router>
+    <>
       <Cursor />
       <Preloader load={load} />
       <div className="App" id={load ? "no-scroll" : "scroll"}>
         <Navbar />
-        <ScrollToTop />
         <div className="main-content">
-          <AnimatedRoutes />
+          <div id="home"><Home /></div>
+          <div id="about"><About /></div>
+          <div id="projects"><Projects /></div>
+          <div id="contact"><Contact /></div>
         </div>
         <Footer />
         <BackToTop />
       </div>
-    </Router>
+    </>
   );
 }
 

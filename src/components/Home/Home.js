@@ -14,16 +14,7 @@ function Home() {
         <Container className="home-content">
           <Row>
             <Col md={7} className="home-header">
-              {/* Open to Work badge */}
-              <motion.div
-                className="open-to-work-badge"
-                initial={{ opacity: 0, x: -30 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5 }}
-              >
-                <span className="otw-dot" />
-                Open to Work
-              </motion.div>
+
 
               <motion.h1
                 style={{ paddingBottom: 15 }}
