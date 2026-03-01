@@ -20,7 +20,8 @@ function Contact() {
         e.preventDefault();
         setStatus("sending");
 
-        fetch("http://localhost:5000/api/contact", {
+        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
+        fetch(`${apiUrl}/api/contact`, {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
