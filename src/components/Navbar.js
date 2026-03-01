@@ -7,8 +7,8 @@ import {
   AiOutlineHome,
   AiOutlineFundProjectionScreen,
   AiOutlineUser,
+  AiOutlineMail,
 } from "react-icons/ai";
-
 import { CgFileDocument } from "react-icons/cg";
 
 function NavBar() {
@@ -23,7 +23,6 @@ function NavBar() {
         updateNavbar(false);
       }
     }
-
     window.addEventListener("scroll", scrollHandler);
     return () => window.removeEventListener("scroll", scrollHandler);
   }, []);
@@ -37,13 +36,13 @@ function NavBar() {
     >
       <Container fluid>
         <Navbar.Brand href="/" className="d-flex" style={{ marginLeft: 0 }}>
-          <h1 style={{ padding: 0, margin: 0, color: "purple", fontFamily: "fantasy" }}>GN</h1>
+          <h1 style={{ padding: 0, margin: 0, color: "purple", fontFamily: "Space Grotesk, fantasy" }}>
+            GN
+          </h1>
         </Navbar.Brand>
         <Navbar.Toggle
           aria-controls="responsive-navbar-nav"
-          onClick={() => {
-            updateExpanded(expand ? false : "expanded");
-          }}
+          onClick={() => updateExpanded(expand ? false : "expanded")}
         >
           <span></span>
           <span></span>
@@ -56,37 +55,25 @@ function NavBar() {
                 <AiOutlineHome style={{ marginBottom: "2px" }} /> Home
               </Nav.Link>
             </Nav.Item>
-
             <Nav.Item>
-              <Nav.Link
-                as={NavLink}
-                to="/about"
-                onClick={() => updateExpanded(false)}
-              >
+              <Nav.Link as={NavLink} to="/about" onClick={() => updateExpanded(false)}>
                 <AiOutlineUser style={{ marginBottom: "2px" }} /> About
               </Nav.Link>
             </Nav.Item>
-
             <Nav.Item>
-              <Nav.Link
-                as={NavLink}
-                to="/project"
-                onClick={() => updateExpanded(false)}
-              >
-                <AiOutlineFundProjectionScreen
-                  style={{ marginBottom: "2px" }}
-                />{" "}
+              <Nav.Link as={NavLink} to="/project" onClick={() => updateExpanded(false)}>
+                <AiOutlineFundProjectionScreen style={{ marginBottom: "2px" }} />{" "}
                 Projects
               </Nav.Link>
             </Nav.Item>
-
             <Nav.Item>
-              <Nav.Link
-                as={NavLink}
-                to="/resume"
-                onClick={() => updateExpanded(false)}
-              >
+              <Nav.Link as={NavLink} to="/resume" onClick={() => updateExpanded(false)}>
                 <CgFileDocument style={{ marginBottom: "2px" }} /> Resume
+              </Nav.Link>
+            </Nav.Item>
+            <Nav.Item>
+              <Nav.Link as={NavLink} to="/contact" onClick={() => updateExpanded(false)}>
+                <AiOutlineMail style={{ marginBottom: "2px" }} /> Contact
               </Nav.Link>
             </Nav.Item>
           </Nav>

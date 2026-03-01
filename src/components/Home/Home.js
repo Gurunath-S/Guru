@@ -4,6 +4,7 @@ import homeLogo from "../../Assets/home-main.svg";
 import Particle from "../Particle";
 import Home2 from "./Home2";
 import Type from "./Type";
+import { motion } from "framer-motion";
 
 function Home() {
   return (
@@ -13,29 +14,59 @@ function Home() {
         <Container className="home-content">
           <Row>
             <Col md={7} className="home-header">
-              <h1 style={{ paddingBottom: 15 }} className="heading">
+              {/* Open to Work badge */}
+              <motion.div
+                className="open-to-work-badge"
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+              >
+                <span className="otw-dot" />
+                Open to Work
+              </motion.div>
+
+              <motion.h1
+                style={{ paddingBottom: 15 }}
+                className="heading"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.1 }}
+              >
                 Hi There!{" "}
                 <span className="wave" role="img" aria-labelledby="wave">
                   👋🏻
                 </span>
-              </h1>
+              </motion.h1>
 
-              <h1 className="heading-name">
+              <motion.h1
+                className="heading-name"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+              >
                 I'M
                 <strong className="main-name"> Gurunath</strong>
-              </h1>
+              </motion.h1>
 
-              <div style={{ padding: 50, textAlign: "left" }}>
+              <motion.div
+                style={{ padding: 50, textAlign: "left" }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.6, delay: 0.35 }}
+              >
                 <Type />
-              </div>
+              </motion.div>
             </Col>
 
             <Col md={5} style={{ paddingBottom: 20 }}>
-              <img
+              <motion.img
                 src={homeLogo}
                 alt="home pic"
                 className="img-fluid"
                 style={{ maxHeight: "450px" }}
+                initial={{ opacity: 0, scale: 0.9 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
               />
             </Col>
           </Row>
