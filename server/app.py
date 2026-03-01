@@ -1,5 +1,6 @@
 import os
 import requests
+import threading
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv
@@ -15,6 +16,17 @@ EMAILJS_SERVICE_ID = os.getenv("EMAILJS_SERVICE_ID")
 EMAILJS_TEMPLATE_ID = os.getenv("EMAILJS_TEMPLATE_ID")
 EMAILJS_PUBLIC_KEY = os.getenv("EMAILJS_PUBLIC_KEY")
 EMAILJS_PRIVATE_KEY = os.getenv("EMAILJS_PRIVATE_KEY")
+
+def send_email_background(payload, headers):
+    try:
+        # We send the request securely from the backend to the EmailJS API in the background
+        requests.post(
+            'https://api.emailjs.com/api/v1.0/email/send',
+            json=payload,
+            headers=headers
+        )
+    except Exception as e:
+        print(f"Background email failed: {str(e)}")
 
 @app.route('/api/contact', methods=['POST'])
 def contact():
@@ -40,22 +52,15 @@ def contact():
         'Content-Type': 'application/json'
     }
 
-    try:
-        # We send the request securely from the backend to the EmailJS API
-        response = requests.post(
-            'https://api.emailjs.com/api/v1.0/email/send',
-            json=payload,
-            headers=headers
-        )
+    # Dispatch the actual email sending to a background thread
+    email_thread = threading.Thread(target=send_email_background, args=(payload, headers))
+    email_thread.start()
 
-        if response.status_code == 200:
-            return jsonify({"message": "Email sent successfully!"}), 200
-        else:
-            return jsonify({"error": f"Failed to send email: {response.text}"}), response.status_code
-
-    except Exception as e:
-        return jsonify({"error": str(e)}), 500
+    # Immediately return success to the frontend to eliminate loading times
+    return jsonify({"message": "Email request received!"}), 200
 
 if __name__ == '__main__':
+    # Run the server on port 5000
+    app.run(debug=True, port=5000)
     # Run the server on port 5000
     app.run(debug=True, port=5000)

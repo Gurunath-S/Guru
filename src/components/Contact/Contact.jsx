@@ -20,18 +20,34 @@ function Contact() {
         e.preventDefault();
         setStatus("sending");
 
-        const apiUrl = process.env.REACT_APP_API_URL || "http://localhost:5000";
-        fetch(`${apiUrl}/api/contact`, {
+        // Bypass backend proxy entirely and send straight from browser for maximum speed
+        const payload = {
+            service_id: "service_urrk1zn",
+            template_id: "template_3l3cbm9",
+            user_id: "PZHU2I5OXhZgAq6tY",
+            template_params: {
+                name: form.name,
+                email: form.email,
+                message: form.message
+            }
+        };
+
+        fetch("https://api.emailjs.com/api/v1.0/email/send", {
             method: "POST",
             headers: {
                 "Content-Type": "application/json",
             },
-            body: JSON.stringify(form),
+            body: JSON.stringify(payload),
         })
             .then(async (response) => {
                 if (response.ok) {
                     setStatus("success");
                     setForm({ name: "", email: "", message: "" });
+
+                    // Clear the success message after 5 seconds
+                    setTimeout(() => {
+                        setStatus("idle");
+                    }, 5000);
                 } else {
                     setStatus("error");
                 }

@@ -15,49 +15,13 @@ function Home2() {
         <Row>
           <Col md={8} className="home-about-description">
             <h1 style={{ fontSize: "2.6em" }}>
-              LET ME <span className="purple"> INTRODUCE </span> MYSELF
+              ABOUT <span className="purple"> ME </span>
             </h1>
             <p className="home-about-body">
-              Hi Everyone, I am <span className="purple">Gurunath S </span>
-              from <span className="purple">Tirupur, India.</span>
+              I am a <span className="purple">Software Engineer</span> based in <span className="purple">Tiruppur</span>, currently working in a startup environment where I build and scale modern web applications. With a <span className="purple">Bachelor’s in Computer Science</span> and an <span className="purple">MCA</span>, I combine strong academic fundamentals with practical product development experience. I specialize in full-stack development using the <b className="purple">MERN stack</b>, building scalable backend systems with <b className="purple">Node.js</b> and crafting responsive frontends with <b className="purple">React.js</b>.
               <br />
               <br />
-              I fell in love with programming and have built a lot of exciting
-              things along the way! 🚀
-              <br />
-              <br />I hold a <span className="purple">Bachelor's degree in Computer Science</span> and have recently completed my <span className="purple">Master of Computer Applications (MCA)</span>. During this time, I gained in-depth knowledge in Web Development, Database Management, and Software Engineering.
-              <br />
-              <br />
-              I am fluent in
-              <i>
-                <b className="purple">  Python, JavaScript and Java </b>
-              </i>
-              — the languages that power the modern tech world.
-              <br />
-              <br />
-              My field of interest includes building new&nbsp;
-              <i>
-                <b className="purple">Web Technologies and Products </b> and
-                working on <b className="purple">MERN stack applications and AI-driven solutions.</b>
-              </i>
-              <br />
-              <br />
-              Whenever possible, I also apply my passion for developing products
-              with <b className="purple">Node.js</b> and
-              <i>
-                <b className="purple">
-                  {" "}
-                  modern JavaScript libraries and frameworks
-                </b>
-              </i>
-              &nbsp; like
-              <i>
-                <b className="purple"> React.js and Expo Router.</b>
-              </i>{" "}
-              I also work with Firebase, MongoDB, and Clerk for authentication and backend services.
-              <br />
-              <br />
-              Apart from coding, some other activities that I love to do include:
+              I also work with tools like <b className="purple">MongoDB, Firebase, Clerk,</b> and <b className="purple">Expo Router</b> to deliver secure, real-time solutions. I’m focused on creating efficient, scalable architectures and exploring <b className="purple">AI-driven technologies</b> to build smarter digital products. I am particularly interested in <b className="purple">Machine Learning</b> and integrating <b className="purple">Large Language Models (LLMs)</b> to enhance application capabilities. Beyond the screen, I stay balanced and grounded by:
             </p>
             <ul style={{ listStyleType: "none", paddingLeft: "15px", fontSize: "1.2em", color: "white" }}>
               <li className="about-activity">
