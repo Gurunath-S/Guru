@@ -1,6 +1,6 @@
 .space-object {
     position: fixed;
-    z-index: 1000;
+    z-index: -1;
     pointer-events: none;
     animation: fly var(--duration) linear forwards;
     /* Rotate the object dynamically so front points toward destination */
