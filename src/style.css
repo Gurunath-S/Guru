@@ -58,13 +58,14 @@ html {
 
 /* Handle */
 ::-webkit-scrollbar-thumb {
-  background: rgba(178, 121, 216, 0.959);
+  background: rgba(178, 121, 216, 0.8);
   border-radius: 12px;
+  transition: background 0.3s ease;
 }
 
 /* Handle on hover */
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(222, 130, 235, 0.911);
+  background: rgba(199, 112, 240, 1);
   border-radius: 12px;
 }
 
@@ -72,15 +73,16 @@ html {
 /* Navbar Section  */
 /* --------- */
 #root .sticky {
-  background-color: #1b1a2ea9;
-  transition: all 0.3s ease-out 0s;
-  box-shadow: 0px 10px 10px 0px rgba(9, 5, 29, 0.171);
+  background-color: rgba(15, 10, 25, 0.85);
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) 0s;
+  box-shadow: 0px 10px 30px 0px rgba(9, 5, 29, 0.5);
   backdrop-filter: blur(15px);
+  border-bottom: 1px solid rgba(199, 112, 240, 0.1);
 }
 
 #root .navbar {
   position: fixed;
-  transition: all 0.3s ease-out 0s;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) 0s;
   padding: 0.3rem 2rem;
   font-size: 1.2rem;
 }
@@ -180,7 +182,7 @@ html {
 
 .navbar-nav .nav-item a {
   font-weight: 400;
-  transition: all 0.3s ease-out 0s;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) 0s;
   position: relative;
   z-index: 1;
 }
@@ -196,7 +198,7 @@ html {
   bottom: 1px;
   left: 0;
   z-index: -1;
-  transition: all 0.3s ease-out 0s;
+  transition: all 0.4s cubic-bezier(0.25, 0.8, 0.25, 1) 0s;
 }
 
 .navbar-nav .nav-item a:hover::after {
@@ -278,6 +280,15 @@ html {
   padding-top: 80px;
 }
 
+@media (max-width: 767px) {
+  #root .home-header {
+    padding-top: 30px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+}
+
 #root .home-section {
   position: relative;
   z-index: 1;
@@ -300,7 +311,12 @@ html {
 }
 
 #root .heading-name {
-  font-size: 2.5em;
+  font-size: 3rem;
+  text-align: left;
+}
+
+#root .home-header-text {
+  text-align: left;
 }
 
 .main-name {
@@ -313,18 +329,35 @@ html {
 }
 
 #root .Typewriter__cursor {
-  color: inherit;
+  color: #cd5ff8;
 }
 
 @media (max-width: 767px) {
   #root .Typewriter__wrapper {
     font-size: 1.4em;
     font-weight: 500;
-    position: absolute;
   }
 
   #root .Typewriter__cursor {
     display: none;
+  }
+
+  #root .heading-name {
+    font-size: 2rem;
+    text-align: center;
+    width: 100%;
+  }
+
+  #root .home-header-text {
+    text-align: center;
+    display: flex;
+    justify-content: center;
+  }
+
+  #root .home-about-body {
+    text-align: center !important;
+    margin: 0 auto;
+    font-size: 0.9em !important;
   }
 }
 
@@ -384,7 +417,7 @@ html {
   line-height: 2em;
   background: rgba(255, 255, 255, 0.972);
   border-radius: 50%;
-  transition: 0.5s;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .home-social-icons::before {
@@ -395,21 +428,22 @@ html {
   width: 100%;
   height: 100%;
   border-radius: 50%;
-  background: #68187a;
-  transition: 0.5s;
+  background: #c770f0;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   transform: scale(0.9);
   z-index: -1;
 }
 
 .home-social-icons:hover::before {
   transform: scale(1.1);
-  box-shadow: 0 0 15px #801f95;
+  box-shadow: 0 0 15px #c770f0;
 }
 
 .home-social-icons:hover {
-  color: #87209e;
-  box-shadow: 0 0 5px #87209e;
-  text-shadow: 0 0 2px #87209e;
+  color: #c770f0;
+  box-shadow: 0 0 10px rgba(199, 112, 240, 0.5);
+  text-shadow: 0 0 2px #c770f0;
+  transform: translateY(-5px);
 }
 
 #root .social-icons {
@@ -482,12 +516,13 @@ html {
   color: white;
   font-size: 24px;
   display: inline-block;
-  transition: transform 0.3s ease-in-out;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 .footer-social-icon:hover {
   color: #c770f0;
-  transform: scale(1.2);
+  transform: scale(1.2) translateY(-3px);
+  text-shadow: 0 0 15px rgba(199, 112, 240, 0.6);
 }
 
 /* --------- */
@@ -509,18 +544,22 @@ html {
 }
 
 #root .project-card-view {
-  box-shadow: 0 4px 5px 3px rgba(119, 53, 136, 0.459);
+  box-shadow: 0 4px 8px 3px rgba(119, 53, 136, 0.3);
   color: white;
   background-color: transparent;
   opacity: 0.9;
-  transition: all 0.5s ease 0s;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   height: 100%;
+  border: 1px solid rgba(199, 112, 240, 0.05);
+  border-radius: 12px;
 }
 
 #root .project-card-view:hover {
-  transform: scale(1.02);
+  transform: translateY(-8px) scale(1.02);
   overflow: hidden;
-  box-shadow: 0 4px 4px 5px rgba(129, 72, 144, 0.561);
+  box-shadow: 0 15px 25px 5px rgba(155, 88, 173, 0.4);
+  background: rgba(30, 20, 40, 0.5);
+  border: 1px solid rgba(199, 112, 240, 0.2);
 }
 
 #root .blog-card {
@@ -533,10 +572,12 @@ html {
 
 #root .blog-card-view {
   background-color: transparent;
-  box-shadow: 0 3px 3px 2px rgba(145, 77, 161, 0.459);
+  box-shadow: 0 4px 8px 3px rgba(145, 77, 161, 0.3);
   color: white;
-  transition: all 0.5s ease 0s;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   height: 100%;
+  border: 1px solid rgba(199, 112, 240, 0.05);
+  border-radius: 12px;
 }
 
 #root .blog-link {
@@ -549,9 +590,11 @@ html {
 }
 
 #root .blog-card-view:hover {
-  transform: scale(1.02);
+  transform: translateY(-8px) scale(1.02);
   overflow: hidden;
-  box-shadow: 0 3px 3px 5px rgba(155, 88, 173, 0.65);
+  box-shadow: 0 15px 25px 5px rgba(155, 88, 173, 0.4);
+  background: rgba(30, 20, 40, 0.5);
+  border: 1px solid rgba(199, 112, 240, 0.2);
 }
 
 #root .card-img-top {
@@ -571,12 +614,15 @@ html {
   color: #fff;
   background-color: #623686;
   border-color: #623686;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #root .btn-primary:hover {
   color: #fff;
-  background-color: #6d20c5d7;
-  border-color: #6d20c5d7;
+  background-color: #6d20c5;
+  border-color: #6d20c5;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(109, 32, 197, 0.4);
 }
 
 #root .btn:focus {
@@ -631,10 +677,10 @@ html {
 }
 
 #root .tech-icons:hover {
-  transform: translateY(-8px) scale(1.05);
-  background: rgba(65, 38, 97, 0.6);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  box-shadow: 0 15px 25px rgba(20, 10, 30, 0.6), 0 0 15px rgba(181, 98, 214, 0.4);
+  transform: translateY(-12px) scale(1.05);
+  background: rgba(65, 38, 97, 0.8);
+  border: 1px solid rgba(199, 112, 240, 0.5);
+  box-shadow: 0 15px 25px rgba(20, 10, 30, 0.8), 0 0 20px rgba(199, 112, 240, 0.4);
 }
 
 #root .tech-icons h5 {
@@ -775,13 +821,14 @@ html {
   padding: 0.25rem 0.98rem;
   border-radius: 5px;
   line-height: 1.4;
-  transition: 0.3s ease;
+  transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 
 #root .like-btn:hover {
-  transform: translateY(-2px);
+  transform: translateY(-4px);
   background-color: #a24dd386;
   border-color: #a24dd386;
+  box-shadow: 0 5px 15px rgba(162, 77, 211, 0.4);
 }
 
 .animate-like {

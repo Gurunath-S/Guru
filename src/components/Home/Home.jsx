@@ -13,7 +13,7 @@ function Home() {
       <Container fluid className="home-section" id="home">
         <Particle />
         <Container className="home-content">
-          <Row>
+          <Row className="flex-column-reverse flex-md-row">
             <Col md={7} className="home-header">
 
 
@@ -22,15 +22,15 @@ function Home() {
                 style={{
                   paddingBottom: 15,
                   marginBottom: 0,
-                  fontSize: "3rem",
-                  textAlign: "left"
                 }}
               >
                 <Typewriter
                   onInit={(typewriter) => {
                     typewriter
                       .pauseFor(400)
-                      .typeString('hi <span class="wave" role="img" aria-labelledby="wave">👋🏻</span>, <strong class="main-name">guru</strong> here.')
+                      .typeString('hi ')
+                      .pasteString('<span class="wave" role="img" aria-labelledby="wave">👋🏻</span>')
+                      .typeString(', <strong class="main-name">guru</strong> here.')
                       .start();
                   }}
                   options={{
@@ -43,7 +43,8 @@ function Home() {
               </motion.h1>
 
               <motion.div
-                style={{ paddingLeft: 0, paddingTop: 0, textAlign: "left" }}
+                className="home-header-text"
+                style={{ paddingLeft: 0, paddingTop: 0 }}
                 initial={{ opacity: 0, y: 20 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.6, delay: 0.35 }}
@@ -60,7 +61,7 @@ function Home() {
               </motion.div>
             </Col>
 
-            <Col md={5} style={{ paddingBottom: 20, display: "flex", justifyContent: "flex-start", alignItems: "center" }}>
+            <Col md={5} style={{ paddingBottom: 20, display: "flex", justifyContent: "center", alignItems: "center" }}>
               <motion.div
                 initial={{ opacity: 0, scale: 0.9 }}
                 animate={{ opacity: 1, scale: 1 }}

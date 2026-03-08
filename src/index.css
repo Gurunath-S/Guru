@@ -5,14 +5,20 @@ html {
   cursor: none;
 }
 
+::selection {
+  background-color: #c770f0;
+  color: #fff;
+}
+
 body {
   margin: 0;
   font-family: "Raleway", sans-serif !important;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
   background-color: #060010;
-  background-image: radial-gradient(ellipse at 20% 50%, rgba(120, 40, 200, 0.08) 0%, transparent 60%),
-    radial-gradient(ellipse at 80% 20%, rgba(0, 200, 220, 0.05) 0%, transparent 50%);
+  background-image: radial-gradient(ellipse at 20% 50%, rgba(120, 40, 200, 0.12) 0%, transparent 60%),
+    radial-gradient(ellipse at 80% 20%, rgba(0, 200, 220, 0.08) 0%, transparent 50%);
   min-height: 100vh;
   color: #e0e0e0;
 }
