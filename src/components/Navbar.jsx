@@ -64,6 +64,14 @@ function NavBar() {
                 Contact
               </Nav.Link>
             </Nav.Item>
+            <Nav.Item>
+              <Nav.Link 
+                href="#arcade" 
+                onClick={() => updateExpanded(false)}
+              >
+                Arcade 🕹️
+              </Nav.Link>
+            </Nav.Item>
           </Nav>
         </Navbar.Collapse>
       </Container>

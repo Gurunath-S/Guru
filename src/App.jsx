@@ -4,6 +4,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Cursor from "./components/Cursor";
 import BackToTop from "./components/BackToTop";
+import Arcade from "./components/Arcade/Arcade";
 
 // Lazy Loaded Components for Code Splitting
 const Home = lazy(() => import("./components/Home/Home"));
@@ -36,6 +37,7 @@ function App() {
             <div id="home"><Home /></div>
             <div id="about"><About /></div>
             <div id="projects"><Projects /></div>
+            <div id="arcade"><Arcade /></div>
             <div id="contact"><Contact /></div>
           </Suspense>
         </div>
