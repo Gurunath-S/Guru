@@ -1,9 +1,9 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaGamepad, FaVolumeUp, FaVolumeMute, FaTimes, FaArrowUp, FaArrowDown, FaArrowLeft, FaArrowRight } from "react-icons/fa";
+import { FaRocket, FaHeart, FaVolumeUp, FaVolumeMute, FaTrophy, FaArrowLeft } from "react-icons/fa";
 import "./Arcade.css";
 
-// Audio Synth helper using Web Audio API
-class SoundSynth {
+// Web Audio API Synthesizer for retro sound effects
+class SoundEngine {
   constructor() {
     this.ctx = null;
     this.muted = false;
@@ -13,9 +13,13 @@ class SoundSynth {
     if (!this.ctx) {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     }
+    // Resume context if suspended (browser security)
+    if (this.ctx && this.ctx.state === "suspended") {
+      this.ctx.resume();
+    }
   }
 
-  playEat() {
+  playLaser() {
     if (this.muted) return;
     this.init();
     try {
@@ -24,22 +28,22 @@ class SoundSynth {
       osc.connect(gain);
       gain.connect(this.ctx.destination);
 
-      osc.type = "sine";
+      osc.type = "triangle";
       const now = this.ctx.currentTime;
-      osc.frequency.setValueAtTime(150, now);
-      osc.frequency.exponentialRampToValueAtTime(800, now + 0.15);
+      osc.frequency.setValueAtTime(800, now);
+      osc.frequency.exponentialRampToValueAtTime(150, now + 0.12);
 
-      gain.gain.setValueAtTime(0.15, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.12);
 
       osc.start(now);
-      osc.stop(now + 0.15);
+      osc.stop(now + 0.12);
     } catch (e) {
-      console.error("Audio error", e);
+      console.warn("Audio failed", e);
     }
   }
 
-  playCrash() {
+  playExplosion() {
     if (this.muted) return;
     this.init();
     try {
@@ -50,615 +54,825 @@ class SoundSynth {
 
       osc.type = "sawtooth";
       const now = this.ctx.currentTime;
-      osc.frequency.setValueAtTime(300, now);
-      osc.frequency.linearRampToValueAtTime(50, now + 0.4);
+      osc.frequency.setValueAtTime(180, now);
+      osc.frequency.linearRampToValueAtTime(30, now + 0.25);
 
-      gain.gain.setValueAtTime(0.2, now);
-      gain.gain.linearRampToValueAtTime(0.01, now + 0.4);
+      gain.gain.setValueAtTime(0.18, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
 
       osc.start(now);
-      osc.stop(now + 0.4);
+      osc.stop(now + 0.25);
     } catch (e) {
-      console.error("Audio error", e);
+      console.warn("Audio failed", e);
     }
   }
 
-  playStart() {
+  playHit() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.type = "square";
+      const now = this.ctx.currentTime;
+      osc.frequency.setValueAtTime(100, now);
+      osc.frequency.setValueAtTime(220, now + 0.05);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.15);
+
+      osc.start(now);
+      osc.stop(now + 0.15);
+    } catch (e) {
+      console.warn("Audio failed", e);
+    }
+  }
+
+  playGameOver() {
     if (this.muted) return;
     this.init();
     try {
       const now = this.ctx.currentTime;
-      const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+      const notes = [300, 220, 150, 90];
       notes.forEach((freq, idx) => {
         const osc = this.ctx.createOscillator();
         const gain = this.ctx.createGain();
         osc.connect(gain);
         gain.connect(this.ctx.destination);
 
-        osc.type = "square";
-        osc.frequency.setValueAtTime(freq, now + idx * 0.1);
-        gain.gain.setValueAtTime(0.08, now + idx * 0.1);
-        gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.1 + 0.15);
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.15);
+        gain.gain.setValueAtTime(0.15, now + idx * 0.15);
+        gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.15 + 0.25);
 
-        osc.start(now + idx * 0.1);
-        osc.stop(now + idx * 0.1 + 0.15);
+        osc.start(now + idx * 0.15);
+        osc.stop(now + idx * 0.15 + 0.25);
       });
     } catch (e) {
-      console.error("Audio error", e);
+      console.warn("Audio failed", e);
     }
   }
 
-  playBonus() {
+  playCountdown() {
     if (this.muted) return;
     this.init();
     try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.type = "sine";
       const now = this.ctx.currentTime;
-      const notes = [523.25, 659.25, 783.99, 1046.50]; // C5, E5, G5, C6
-      notes.forEach((freq, idx) => {
-        const osc = this.ctx.createOscillator();
-        const gain = this.ctx.createGain();
-        osc.connect(gain);
-        gain.connect(this.ctx.destination);
+      osc.frequency.setValueAtTime(440, now);
 
-        osc.type = "triangle";
-        osc.frequency.setValueAtTime(freq, now + idx * 0.08);
-        gain.gain.setValueAtTime(0.12, now + idx * 0.08);
-        gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.08 + 0.12);
+      gain.gain.setValueAtTime(0.1, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.1);
 
-        osc.start(now + idx * 0.08);
-        osc.stop(now + idx * 0.08 + 0.12);
-      });
+      osc.start(now);
+      osc.stop(now + 0.1);
     } catch (e) {
-      console.error("Audio error", e);
+      console.warn("Audio failed", e);
+    }
+  }
+
+  playLaunch() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const osc = this.ctx.createOscillator();
+      const gain = this.ctx.createGain();
+      osc.connect(gain);
+      gain.connect(this.ctx.destination);
+
+      osc.type = "sine";
+      const now = this.ctx.currentTime;
+      osc.frequency.setValueAtTime(880, now);
+
+      gain.gain.setValueAtTime(0.15, now);
+      gain.gain.linearRampToValueAtTime(0.01, now + 0.25);
+
+      osc.start(now);
+      osc.stop(now + 0.25);
+    } catch (e) {
+      console.warn("Audio failed", e);
     }
   }
 }
 
-const synth = new SoundSynth();
-
-const GRID_SIZE_X = 20;
-const GRID_SIZE_Y = 15;
-const CELL_SIZE = 20; // Size of a cell on canvas (400x300)
+const sounds = new SoundEngine();
 
 export default function Arcade() {
-  const [isFocused, setIsFocused] = useState(false);
   const [highScore, setHighScore] = useState(() => {
-    return parseInt(localStorage.getItem("bug_hunter_high_score") || "0", 10);
+    return parseInt(localStorage.getItem("astro_shooter_high_score") || "0", 10);
   });
+
+  const [gameState, setGameState] = useState("IDLE"); // IDLE, COUNTDOWN, PLAYING, GAMEOVER
   const [score, setScore] = useState(0);
-  const [gameState, setGameState] = useState("START"); // START, PLAYING, GAME_OVER
+  const [shield, setShield] = useState(100);
   const [muted, setMuted] = useState(false);
+  const [countdown, setCountdown] = useState(3);
+  const [screenShake, setScreenShake] = useState(false);
 
   const canvasRef = useRef(null);
-  const gameLoopRef = useRef(null);
+  const gameLoopId = useRef(null);
+  const keysPressed = useRef({});
+  const mousePos = useRef({ x: 0, y: 0 });
 
-  // Mutable game state variables to avoid closure stale state in game loop
-  const snakeRef = useRef([{ x: 5, y: 7 }, { x: 4, y: 7 }, { x: 3, y: 7 }]);
-  const directionRef = useRef({ x: 1, y: 0 });
-  const nextDirectionRef = useRef({ x: 1, y: 0 });
-  const foodRef = useRef({ x: 12, y: 7, type: "COFFEE" }); // COFFEE (☕), PR (🔀), STAR (⭐)
-  const bugsRef = useRef([]); // Obstacles that can move
-  const conflictsRef = useRef([]); // Static obstacles (❌)
+  // Game Engine state refs to avoid stale React state references in 60fps loop
+  const astronautRef = useRef({
+    x: 0,
+    y: 0,
+    vx: 0,
+    vy: 0,
+    angle: 0,
+    radius: 20,
+    lastFired: 0,
+    fireRate: 200 // ms
+  });
+  const lasersRef = useRef([]);
+  const bugsRef = useRef([]);
   const particlesRef = useRef([]);
-  const scoreRef = useRef(0);
-  const speedRef = useRef(150); // Speed in ms
-  const lastUpdateRef = useRef(0);
+  const starsRef = useRef([]);
+  const gameScoreRef = useRef(0);
+  const gameShieldRef = useRef(100);
+  const lastSpawnTime = useRef(0);
+  const spawnInterval = useRef(1500); // starts spawning every 1.5 seconds
 
-  // Initialize Audio Synth toggle state
+  // Initialize sounds muted state
   useEffect(() => {
-    synth.muted = muted;
+    sounds.muted = muted;
   }, [muted]);
 
-  // Listen to keyboard direction keys
+  // Prevent scroll when playing
+  useEffect(() => {
+    if (gameState === "PLAYING" || gameState === "COUNTDOWN") {
+      document.body.style.overflow = "hidden";
+    } else {
+      document.body.style.overflow = "";
+    }
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [gameState]);
+
+  // Bind keyboard inputs
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (!isFocused) return;
-
-      const keys = ["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "w", "a", "s", "d", "W", "A", "S", "D", " ", "Enter"];
-      if (keys.includes(e.key)) {
-        e.preventDefault(); // Stop page scrolling
+      if (gameState !== "PLAYING") return;
+      keysPressed.current[e.key.toLowerCase()] = true;
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(e.key.toLowerCase())) {
+        e.preventDefault();
       }
+    };
 
-      if (gameState !== "PLAYING") {
-        if (e.key === "Enter" || e.key === " ") {
-          startGame();
-        }
-        return;
-      }
-
-      const dir = directionRef.current;
-      let newDir = null;
-
-      if (e.key === "ArrowUp" || e.key === "w" || e.key === "W") {
-        if (dir.y === 0) newDir = { x: 0, y: -1 };
-      } else if (e.key === "ArrowDown" || e.key === "s" || e.key === "S") {
-        if (dir.y === 0) newDir = { x: 0, y: 1 };
-      } else if (e.key === "ArrowLeft" || e.key === "a" || e.key === "A") {
-        if (dir.x === 0) newDir = { x: -1, y: 0 };
-      } else if (e.key === "ArrowRight" || e.key === "d" || e.key === "D") {
-        if (dir.x === 0) newDir = { x: 1, y: 0 };
-      }
-
-      if (newDir) {
-        nextDirectionRef.current = newDir;
-      }
+    const handleKeyUp = (e) => {
+      keysPressed.current[e.key.toLowerCase()] = false;
     };
 
     window.addEventListener("keydown", handleKeyDown);
-    return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [isFocused, gameState]);
+    window.addEventListener("keyup", handleKeyUp);
+    return () => {
+      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keyup", handleKeyUp);
+    };
+  }, [gameState]);
 
-  // Game initialization
-  const startGame = () => {
-    snakeRef.current = [
-      { x: 5, y: 7 },
-      { x: 4, y: 7 },
-      { x: 3, y: 7 }
-    ];
-    directionRef.current = { x: 1, y: 0 };
-    nextDirectionRef.current = { x: 1, y: 0 };
-    scoreRef.current = 0;
-    setScore(0);
-    speedRef.current = 150;
-    bugsRef.current = [];
-    conflictsRef.current = [];
-    particlesRef.current = [];
-    spawnFood();
-    setGameState("PLAYING");
-    synth.playStart();
-    lastUpdateRef.current = performance.now();
-  };
-
-  // Spawns items in empty cells
-  const spawnFood = () => {
-    const isOccupied = (x, y) => {
-      if (snakeRef.current.some((seg) => seg.x === x && seg.y === y)) return true;
-      if (bugsRef.current.some((bug) => bug.x === x && bug.y === y)) return true;
-      if (conflictsRef.current.some((c) => c.x === x && c.y === y)) return true;
-      return false;
+  // Track mouse coordinates
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      mousePos.current = { x: e.clientX, y: e.clientY };
     };
 
-    let attempts = 0;
-    let x, y;
-    do {
-      x = Math.floor(Math.random() * GRID_SIZE_X);
-      y = Math.floor(Math.random() * GRID_SIZE_Y);
-      attempts++;
-    } while (isOccupied(x, y) && attempts < 100);
+    const handleMouseDown = () => {
+      if (gameState === "PLAYING") {
+        fireLaser();
+      }
+    };
 
-    const rand = Math.random();
-    let type = "COFFEE"; // Standard
-    if (rand > 0.85) {
-      type = "PR"; // Pull Request (bonus points)
-    } else if (rand > 0.7) {
-      type = "STAR"; // Github Star (mid-tier)
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mousedown", handleMouseDown);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mousedown", handleMouseDown);
+    };
+  }, [gameState]);
+
+  // Handle countdown logic before starting the game
+  useEffect(() => {
+    if (gameState !== "COUNTDOWN") return;
+
+    sounds.init();
+    setCountdown(3);
+    sounds.playCountdown();
+
+    const interval = setInterval(() => {
+      setCountdown((prev) => {
+        if (prev <= 1) {
+          clearInterval(interval);
+          sounds.playLaunch();
+          setGameState("PLAYING");
+          startGameLoop();
+          return 0;
+        } else {
+          sounds.playCountdown();
+          return prev - 1;
+        }
+      });
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [gameState]);
+
+  const initiateGame = () => {
+    sounds.init();
+    // Setup initial astronaut position in the center
+    astronautRef.current.x = window.innerWidth / 2;
+    astronautRef.current.y = window.innerHeight / 2;
+    astronautRef.current.vx = 0;
+    astronautRef.current.vy = 0;
+    astronautRef.current.angle = 0;
+
+    lasersRef.current = [];
+    bugsRef.current = [];
+    particlesRef.current = [];
+    gameScoreRef.current = 0;
+    gameShieldRef.current = 100;
+    spawnInterval.current = 1500;
+    lastSpawnTime.current = performance.now();
+
+    setScore(0);
+    setShield(100);
+
+    // Populate starfield background
+    const stars = [];
+    const starCount = Math.floor((window.innerWidth * window.innerHeight) / 6000);
+    for (let i = 0; i < starCount; i++) {
+      stars.push({
+        x: Math.random() * window.innerWidth,
+        y: Math.random() * window.innerHeight,
+        size: Math.random() * 2 + 0.5,
+        speed: Math.random() * 0.8 + 0.2
+      });
+    }
+    starsRef.current = stars;
+
+    setGameState("COUNTDOWN");
+  };
+
+  const fireLaser = () => {
+    const astro = astronautRef.current;
+    const now = performance.now();
+    if (now - astro.lastFired < astro.fireRate) return;
+
+    astro.lastFired = now;
+    sounds.playLaser();
+
+    // Fire laser from astronaut center in direction of mouse cursor
+    const dx = mousePos.current.x - astro.x;
+    const dy = mousePos.current.y - astro.y;
+    const angle = Math.atan2(dy, dx);
+
+    const laserSpeed = 12;
+    lasersRef.current.push({
+      x: astro.x + Math.cos(angle) * astro.radius,
+      y: astro.y + Math.sin(angle) * astro.radius,
+      vx: Math.cos(angle) * laserSpeed,
+      vy: Math.sin(angle) * laserSpeed,
+      angle: angle,
+      radius: 4
+    });
+
+    // Spawn tiny muzzle flash particles
+    for (let i = 0; i < 3; i++) {
+      particlesRef.current.push({
+        x: astro.x + Math.cos(angle) * astro.radius,
+        y: astro.y + Math.sin(angle) * astro.radius,
+        vx: Math.cos(angle) * 3 + (Math.random() - 0.5) * 2,
+        vy: Math.sin(angle) * 3 + (Math.random() - 0.5) * 2,
+        color: "#00ffcc",
+        life: 1.0,
+        decay: 0.08,
+        size: Math.random() * 3 + 1
+      });
+    }
+  };
+
+  const spawnBug = () => {
+    const width = window.innerWidth;
+    const height = window.innerHeight;
+
+    // Pick a random edge to spawn the bug off-screen
+    const edge = Math.floor(Math.random() * 4);
+    let x, y;
+    if (edge === 0) { // Top
+      x = Math.random() * width;
+      y = -40;
+    } else if (edge === 1) { // Right
+      x = width + 40;
+      y = Math.random() * height;
+    } else if (edge === 2) { // Bottom
+      x = Math.random() * width;
+      y = height + 40;
+    } else { // Left
+      x = -40;
+      y = Math.random() * height;
     }
 
-    foodRef.current = { x, y, type };
+    // Bug items representing errors
+    const errorTypes = [
+      { text: "SyntaxError", color: "#ff4d4d", points: 20 },
+      { text: "404 NotFound", color: "#ff9900", points: 30 },
+      { text: "NullPointerException", color: "#ff3366", points: 50 },
+      { text: "Merge Conflict ❌", color: "#ff33ff", points: 40 },
+      { text: "TypeError", color: "#ff3300", points: 25 },
+      { text: "🐛 Bug", color: "#00ffcc", points: 15 }
+    ];
+
+    const type = errorTypes[Math.floor(Math.random() * errorTypes.length)];
+
+    // Travel direction generally towards the center of the viewport
+    const targetX = width / 2 + (Math.random() - 0.5) * (width * 0.5);
+    const targetY = height / 2 + (Math.random() - 0.5) * (height * 0.5);
+    const angle = Math.atan2(targetY - y, targetX - x);
+    const speed = Math.random() * 2 + 1;
+
+    bugsRef.current.push({
+      x,
+      y,
+      vx: Math.cos(angle) * speed,
+      vy: Math.sin(angle) * speed,
+      text: type.text,
+      color: type.color,
+      points: type.points,
+      radius: Math.max(type.text.length * 4.5, 18), // collision bounding box
+      angle: Math.random() * Math.PI * 2,
+      rotationSpeed: (Math.random() - 0.5) * 0.03
+    });
   };
 
-  // Spawn obstacles: Bugs (moving) and Conflicts (static)
-  const spawnObstacle = () => {
-    const isOccupied = (x, y) => {
-      if (snakeRef.current.some((seg) => seg.x === x && seg.y === y)) return true;
-      if (foodRef.current.x === x && foodRef.current.y === y) return true;
-      if (bugsRef.current.some((bug) => bug.x === x && bug.y === y)) return true;
-      if (conflictsRef.current.some((c) => c.x === x && c.y === y)) return true;
-      return false;
-    };
-
-    let x, y;
-    let attempts = 0;
-    do {
-      x = Math.floor(Math.random() * GRID_SIZE_X);
-      y = Math.floor(Math.random() * GRID_SIZE_Y);
-      attempts++;
-    } while (isOccupied(x, y) && attempts < 100);
-
-    if (Math.random() > 0.5) {
-      // Spawn static Merge Conflict
-      conflictsRef.current.push({ x, y });
-    } else {
-      // Spawn moving Bug
-      bugsRef.current.push({
+  const createExplosion = (x, y, color) => {
+    sounds.playExplosion();
+    // Spawns 12 bright exploding particles
+    for (let i = 0; i < 15; i++) {
+      const angle = Math.random() * Math.PI * 2;
+      const speed = Math.random() * 4 + 1.5;
+      particlesRef.current.push({
         x,
         y,
-        dirX: Math.random() > 0.5 ? 1 : -1,
-        dirY: Math.random() > 0.5 ? 1 : -1
-      });
-    }
-  };
-
-  // Create explosion particles on eat
-  const spawnParticles = (x, y, color) => {
-    const px = x * CELL_SIZE + CELL_SIZE / 2;
-    const py = y * CELL_SIZE + CELL_SIZE / 2;
-    for (let i = 0; i < 8; i++) {
-      const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 2 + 1;
-      particlesRef.current.push({
-        x: px,
-        y: py,
         vx: Math.cos(angle) * speed,
         vy: Math.sin(angle) * speed,
+        color,
         life: 1.0,
-        decay: Math.random() * 0.05 + 0.03,
-        color
+        decay: Math.random() * 0.03 + 0.02,
+        size: Math.random() * 4 + 1.5
       });
     }
   };
 
-  // Direction handler for on-screen controls
-  const handleVirtualDir = (dx, dy) => {
-    if (gameState !== "PLAYING") return;
-    const dir = directionRef.current;
-    if (dx !== 0 && dir.x === 0) {
-      nextDirectionRef.current = { x: dx, y: 0 };
-    } else if (dy !== 0 && dir.y === 0) {
-      nextDirectionRef.current = { x: 0, y: dy };
+  const triggerDamage = () => {
+    sounds.playHit();
+    setScreenShake(true);
+    setTimeout(() => setScreenShake(false), 200);
+  };
+
+  const triggerGameOver = () => {
+    sounds.playGameOver();
+    setGameState("GAMEOVER");
+    cancelAnimationFrame(gameLoopId.current);
+
+    if (gameScoreRef.current > highScore) {
+      setHighScore(gameScoreRef.current);
+      localStorage.setItem("astro_shooter_high_score", gameScoreRef.current.toString());
     }
   };
 
-  // Main Canvas Rendering & Game Loop
-  useEffect(() => {
-    if (!canvasRef.current) return;
-
+  const startGameLoop = () => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
+
+    // Size canvas to exact viewport bounds
+    canvas.width = window.innerWidth;
+    canvas.height = window.innerHeight;
     const ctx = canvas.getContext("2d");
 
-    const updateGame = () => {
-      const snake = [...snakeRef.current];
-      const head = { ...snake[0] };
-      const dir = nextDirectionRef.current;
-      directionRef.current = dir;
-
-      // Update head position
-      head.x += dir.x;
-      head.y += dir.y;
-
-      // Check grid wall collision
-      if (head.x < 0 || head.x >= GRID_SIZE_X || head.y < 0 || head.y >= GRID_SIZE_Y) {
-        gameOver();
-        return;
-      }
-
-      // Check self collision
-      if (snake.some((segment) => segment.x === head.x && segment.y === head.y)) {
-        gameOver();
-        return;
-      }
-
-      // Check conflict obstacles collision
-      if (conflictsRef.current.some((c) => c.x === head.x && c.y === head.y)) {
-        gameOver();
-        return;
-      }
-
-      // Check bug collision
-      if (bugsRef.current.some((b) => b.x === head.x && b.y === head.y)) {
-        gameOver();
-        return;
-      }
-
-      // Insert new head at the beginning
-      snake.unshift(head);
-
-      // Check if food is eaten
-      const food = foodRef.current;
-      if (head.x === food.x && head.y === food.y) {
-        let points = 10;
-        let pColor = "#cd5ff8";
-
-        if (food.type === "PR") {
-          points = 50;
-          pColor = "#00ffcc";
-          synth.playBonus();
-        } else if (food.type === "STAR") {
-          points = 25;
-          pColor = "#ffcc00";
-          synth.playEat();
-        } else {
-          synth.playEat();
-        }
-
-        // Add to score
-        scoreRef.current += points;
-        setScore(scoreRef.current);
-
-        spawnParticles(food.x, food.y, pColor);
-        spawnFood();
-
-        // Speed scaling & obstacle spawning
-        if (scoreRef.current % 30 === 0) {
-          spawnObstacle();
-          speedRef.current = Math.max(70, speedRef.current - 8);
-        }
-      } else {
-        // Remove tail if no food eaten
-        snake.pop();
-      }
-
-      snakeRef.current = snake;
-
-      // Update moving Bugs
-      bugsRef.current = bugsRef.current.map((bug) => {
-        let nx = bug.x + bug.dirX;
-        let ny = bug.y + bug.dirY;
-
-        // Bounce off bounds
-        if (nx < 0 || nx >= GRID_SIZE_X) {
-          bug.dirX *= -1;
-          nx = bug.x + bug.dirX;
-        }
-        if (ny < 0 || ny >= GRID_SIZE_Y) {
-          bug.dirY *= -1;
-          ny = bug.y + bug.dirY;
-        }
-
-        return { ...bug, x: nx, y: ny };
-      });
-    };
-
-    const gameOver = () => {
-      setGameState("GAME_OVER");
-      synth.playCrash();
-
-      // Check high score
-      if (scoreRef.current > highScore) {
-        setHighScore(scoreRef.current);
-        localStorage.setItem("bug_hunter_high_score", scoreRef.current.toString());
-      }
-    };
-
-    const draw = () => {
-      // Clear canvas with deep violet
-      ctx.fillStyle = "#0c0517";
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-      // Draw subtle grid lines
-      ctx.strokeStyle = "rgba(190, 80, 244, 0.05)";
-      ctx.lineWidth = 1;
-      for (let i = 0; i <= GRID_SIZE_X; i++) {
-        ctx.beginPath();
-        ctx.moveTo(i * CELL_SIZE, 0);
-        ctx.lineTo(i * CELL_SIZE, canvas.height);
-        ctx.stroke();
-      }
-      for (let j = 0; j <= GRID_SIZE_Y; j++) {
-        ctx.beginPath();
-        ctx.moveTo(0, j * CELL_SIZE);
-        ctx.lineTo(canvas.width, j * CELL_SIZE);
-        ctx.stroke();
-      }
-
-      // Draw game content depending on state
-      if (gameState === "START") {
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        ctx.fillStyle = "#be50f4";
-        ctx.font = "bold 20px 'Space Grotesk', sans-serif";
-        ctx.fillText("BUG HUNTER ARCADE", canvas.width / 2, canvas.height / 2 - 30);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "14px 'Space Grotesk', sans-serif";
-        ctx.fillText("Eat code items, avoid Bugs & Conflicts!", canvas.width / 2, canvas.height / 2 + 10);
-
-        ctx.fillStyle = "#00ffcc";
-        ctx.font = "12px monospace";
-        ctx.fillText("PRESS [SPACE / ENTER] OR CLICK PLAY", canvas.width / 2, canvas.height / 2 + 45);
-      } else if (gameState === "GAME_OVER") {
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-
-        ctx.fillStyle = "#ff4a4a";
-        ctx.font = "bold 24px 'Space Grotesk', sans-serif";
-        ctx.fillText("CRITICAL ERROR", canvas.width / 2, canvas.height / 2 - 40);
-
-        ctx.fillStyle = "#ffffff";
-        ctx.font = "14px 'Space Grotesk', sans-serif";
-        ctx.fillText(`Final Score: ${scoreRef.current}`, canvas.width / 2, canvas.height / 2 - 5);
-
-        if (scoreRef.current >= highScore && scoreRef.current > 0) {
-          ctx.fillStyle = "#ffcc00";
-          ctx.font = "14px monospace";
-          ctx.fillText("NEW HIGH SCORE!", canvas.width / 2, canvas.height / 2 + 20);
-        }
-
-        ctx.fillStyle = "#00ffcc";
-        ctx.font = "12px monospace";
-        ctx.fillText("PRESS [SPACE] OR PLAY TO RETRY", canvas.width / 2, canvas.height / 2 + 50);
-      } else {
-        // PLAYING
-
-        // 1. Draw Food
-        const food = foodRef.current;
-        ctx.font = "14px sans-serif";
-        ctx.textAlign = "center";
-        ctx.textBaseline = "middle";
-        let foodChar = "☕";
-        if (food.type === "PR") foodChar = "🔀";
-        if (food.type === "STAR") foodChar = "⭐";
-        ctx.fillText(foodChar, food.x * CELL_SIZE + CELL_SIZE / 2, food.y * CELL_SIZE + CELL_SIZE / 2);
-
-        // 2. Draw Static Merge Conflicts (❌)
-        conflictsRef.current.forEach((c) => {
-          ctx.font = "14px sans-serif";
-          ctx.fillText("❌", c.x * CELL_SIZE + CELL_SIZE / 2, c.y * CELL_SIZE + CELL_SIZE / 2);
-        });
-
-        // 3. Draw Moving Bugs (🐛)
-        bugsRef.current.forEach((b) => {
-          ctx.font = "14px sans-serif";
-          ctx.fillText("🐛", b.x * CELL_SIZE + CELL_SIZE / 2, b.y * CELL_SIZE + CELL_SIZE / 2);
-        });
-
-        // 4. Draw Snake
-        const snake = snakeRef.current;
-        const bodyChars = ["{", "s", "n", "a", "k", "e", "}", "1", "0", "[", "]", "c", "o", "d", "e"];
-        snake.forEach((segment, idx) => {
-          // Neon shadow for the snake
-          ctx.shadowColor = idx === 0 ? "#00ffcc" : "#be50f4";
-          ctx.shadowBlur = 8;
-
-          ctx.fillStyle = idx === 0 ? "#00ffcc" : "rgba(190, 80, 244, 0.85)";
-          
-          if (idx === 0) {
-            // Draw head
-            ctx.font = "bold 13px monospace";
-            ctx.fillText("()=>", segment.x * CELL_SIZE + CELL_SIZE / 2, segment.y * CELL_SIZE + CELL_SIZE / 2);
-          } else {
-            // Draw body as code characters
-            const charIdx = (idx - 1) % bodyChars.length;
-            ctx.font = "12px monospace";
-            ctx.fillText(bodyChars[charIdx], segment.x * CELL_SIZE + CELL_SIZE / 2, segment.y * CELL_SIZE + CELL_SIZE / 2);
-          }
-        });
-
-        // Reset shadow
-        ctx.shadowBlur = 0;
-      }
-
-      // Draw Particles
-      particlesRef.current = particlesRef.current.filter((p) => {
-        ctx.fillStyle = p.color;
-        ctx.globalAlpha = p.life;
-        ctx.beginPath();
-        ctx.arc(p.x, p.y, 2, 0, Math.PI * 2);
-        ctx.fill();
-
-        p.x += p.vx;
-        p.y += p.vy;
-        p.life -= p.decay;
-        return p.life > 0;
-      });
-      ctx.globalAlpha = 1.0;
-    };
-
     const loop = (timestamp) => {
-      if (gameState === "PLAYING") {
-        const elapsed = timestamp - lastUpdateRef.current;
-        if (elapsed > speedRef.current) {
-          updateGame();
-          lastUpdateRef.current = timestamp;
-        }
+      updateGame();
+      drawGame(ctx);
+      gameLoopId.current = requestAnimationFrame(loop);
+    };
+
+    gameLoopId.current = requestAnimationFrame(loop);
+  };
+
+  const updateGame = () => {
+    // 1. Spawning
+    const now = performance.now();
+    // Accelerate spawn intervals over score scaling
+    const dynamicInterval = Math.max(300, spawnInterval.current - (gameScoreRef.current * 3));
+    if (now - lastSpawnTime.current > dynamicInterval) {
+      spawnBug();
+      lastSpawnTime.current = now;
+    }
+
+    // 2. Astronaut Physics
+    const astro = astronautRef.current;
+    const accel = 0.4;
+    const damping = 0.94;
+    const maxSpeed = 7;
+
+    // Movement inputs (WASD / Arrows)
+    const keys = keysPressed.current;
+    let thrusting = false;
+    if (keys["w"] || keys["arrowup"]) {
+      astro.vy -= accel;
+      thrusting = true;
+    }
+    if (keys["s"] || keys["arrowdown"]) {
+      astro.vy += accel;
+      thrusting = true;
+    }
+    if (keys["a"] || keys["arrowleft"]) {
+      astro.vx -= accel;
+      thrusting = true;
+    }
+    if (keys["d"] || keys["arrowright"]) {
+      astro.vx += accel;
+      thrusting = true;
+    }
+
+    // Apply drag
+    astro.vx *= damping;
+    astro.vy *= damping;
+
+    // Clamp speed limits
+    const speed = Math.sqrt(astro.vx * astro.vx + astro.vy * astro.vy);
+    if (speed > maxSpeed) {
+      astro.vx = (astro.vx / speed) * maxSpeed;
+      astro.vy = (astro.vy / speed) * maxSpeed;
+    }
+
+    // Update position
+    astro.x += astro.vx;
+    astro.y += astro.vy;
+
+    // Clamp to viewport borders with slight rebound
+    const padding = astro.radius + 10;
+    if (astro.x < padding) {
+      astro.x = padding;
+      astro.vx *= -0.5;
+    }
+    if (astro.x > window.innerWidth - padding) {
+      astro.x = window.innerWidth - padding;
+      astro.vx *= -0.5;
+    }
+    if (astro.y < padding) {
+      astro.y = padding;
+      astro.vy *= -0.5;
+    }
+    if (astro.y > window.innerHeight - padding) {
+      astro.y = window.innerHeight - padding;
+      astro.vy *= -0.5;
+    }
+
+    // Rotate astronaut face to look at mouse pointer
+    const dx = mousePos.current.x - astro.x;
+    const dy = mousePos.current.y - astro.y;
+    astro.angle = Math.atan2(dy, dx);
+
+    // Continuous shoot when holding SPACEBAR
+    if (keys[" "] || keys["spacebar"]) {
+      fireLaser();
+    }
+
+    // Thrust flame particles
+    if (thrusting && Math.random() > 0.4) {
+      const flameAngle = astro.angle + Math.PI + (Math.random() - 0.5) * 0.5;
+      particlesRef.current.push({
+        x: astro.x - Math.cos(astro.angle) * astro.radius,
+        y: astro.y - Math.sin(astro.angle) * astro.radius,
+        vx: Math.cos(flameAngle) * (2 + Math.random() * 2),
+        vy: Math.sin(flameAngle) * (2 + Math.random() * 2),
+        color: Math.random() > 0.4 ? "#c770f0" : "#ff33ff",
+        life: 1.0,
+        decay: 0.05,
+        size: Math.random() * 3 + 1
+      });
+    }
+
+    // 3. Update stars parallax effect
+    starsRef.current.forEach((star) => {
+      star.x -= star.speed * (astro.vx * 0.1 + 0.5); // base drift + player velocity react
+      if (star.x < 0) {
+        star.x = window.innerWidth;
+        star.y = Math.random() * window.innerHeight;
       }
-      draw();
-      gameLoopRef.current = requestAnimationFrame(loop);
-    };
+    });
 
-    gameLoopRef.current = requestAnimationFrame(loop);
+    // 4. Update lasers
+    lasersRef.current = lasersRef.current.filter((laser) => {
+      laser.x += laser.vx;
+      laser.y += laser.vy;
 
-    return () => {
-      cancelAnimationFrame(gameLoopRef.current);
-    };
-  }, [gameState, highScore]);
+      // Keep if within screen boundaries
+      return (
+        laser.x >= 0 &&
+        laser.x <= window.innerWidth &&
+        laser.y >= 0 &&
+        laser.y <= window.innerHeight
+      );
+    });
+
+    // 5. Update particles
+    particlesRef.current = particlesRef.current.filter((p) => {
+      p.x += p.vx;
+      p.y += p.vy;
+      p.life -= p.decay;
+      return p.life > 0;
+    });
+
+    // 6. Update bugs and collision checks
+    bugsRef.current = bugsRef.current.filter((bug) => {
+      bug.x += bug.vx;
+      bug.y += bug.vy;
+      bug.angle += bug.rotationSpeed;
+
+      // Check laser collision
+      let hit = false;
+      lasersRef.current.forEach((laser) => {
+        const ldx = laser.x - bug.x;
+        const ldy = laser.y - bug.y;
+        const dist = Math.sqrt(ldx * ldx + ldy * ldy);
+        if (dist < bug.radius + laser.radius) {
+          hit = true;
+          laser.x = -9999; // destroy laser
+        }
+      });
+
+      if (hit) {
+        createExplosion(bug.x, bug.y, bug.color);
+        gameScoreRef.current += bug.points;
+        setScore(gameScoreRef.current);
+        return false; // remove bug
+      }
+
+      // Check astronaut collision
+      const adx = astro.x - bug.x;
+      const ady = astro.y - bug.y;
+      const distToAstro = Math.sqrt(adx * adx + ady * ady);
+      if (distToAstro < bug.radius + astro.radius) {
+        createExplosion(bug.x, bug.y, "#ff3333");
+        triggerDamage();
+
+        gameShieldRef.current = Math.max(0, gameShieldRef.current - 20);
+        setShield(gameShieldRef.current);
+
+        if (gameShieldRef.current <= 0) {
+          triggerGameOver();
+        }
+        return false; // remove bug
+      }
+
+      // Keep if on-screen or close to boundaries
+      return (
+        bug.x >= -100 &&
+        bug.x <= window.innerWidth + 100 &&
+        bug.y >= -100 &&
+        bug.y <= window.innerHeight + 100
+      );
+    });
+  };
+
+  const drawGame = (ctx) => {
+    // Clear screen with a semitransparent overlay to get beautiful neon light tracers
+    ctx.fillStyle = "rgba(10, 4, 22, 0.4)";
+    ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+
+    // 1. Draw Starfield Parallax
+    starsRef.current.forEach((star) => {
+      ctx.fillStyle = `rgba(255, 255, 255, ${0.4 + Math.random() * 0.4})`;
+      ctx.beginPath();
+      ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+
+    // 2. Draw Lasers
+    lasersRef.current.forEach((laser) => {
+      ctx.save();
+      ctx.translate(laser.x, laser.y);
+      ctx.rotate(laser.angle);
+      
+      // Neon green light tracer line
+      ctx.shadowColor = "#00ffcc";
+      ctx.shadowBlur = 10;
+      ctx.fillStyle = "#00ffcc";
+      ctx.fillRect(-8, -1.5, 16, 3);
+      ctx.restore();
+    });
+
+    // 3. Draw Bugs (floating text errors or emojis)
+    bugsRef.current.forEach((bug) => {
+      ctx.save();
+      ctx.translate(bug.x, bug.y);
+      ctx.rotate(bug.angle);
+
+      // Red/pink neon glow for errors
+      ctx.shadowColor = bug.color;
+      ctx.shadowBlur = 12;
+      ctx.fillStyle = bug.color;
+      ctx.font = "bold 15px monospace";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(bug.text, 0, 0);
+
+      // Draw bounding box details for retro vibe
+      ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
+      ctx.lineWidth = 1;
+      ctx.shadowBlur = 0;
+      ctx.strokeRect(-bug.radius, -10, bug.radius * 2, 20);
+
+      ctx.restore();
+    });
+
+    // 4. Draw Particles
+    particlesRef.current.forEach((p) => {
+      ctx.fillStyle = p.color;
+      ctx.globalAlpha = p.life;
+      ctx.shadowColor = p.color;
+      ctx.shadowBlur = 6;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
+      ctx.fill();
+    });
+    ctx.globalAlpha = 1.0;
+    ctx.shadowBlur = 0;
+
+    // 5. Draw Astronaut
+    const astro = astronautRef.current;
+    ctx.save();
+    ctx.translate(astro.x, astro.y);
+    ctx.rotate(astro.angle);
+
+    // Neon drop shadow
+    ctx.shadowColor = "#be50f4";
+    ctx.shadowBlur = 15;
+
+    // Backpack (Left of orientation)
+    ctx.fillStyle = "#a588c0";
+    ctx.fillRect(-22, -10, 8, 20);
+
+    // Body suit (White)
+    ctx.fillStyle = "#ffffff";
+    ctx.beginPath();
+    ctx.arc(-2, 0, 14, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Helmet visor (Dark faceplate with HUD glow)
+    ctx.fillStyle = "#2d1950";
+    ctx.beginPath();
+    ctx.arc(4, 0, 10, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Visor Glass
+    ctx.fillStyle = "#00ffcc";
+    ctx.shadowColor = "#00ffcc";
+    ctx.shadowBlur = 6;
+    ctx.beginPath();
+    ctx.ellipse(6, 0, 5, 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Thruster nozzles (Rear)
+    ctx.fillStyle = "#333333";
+    ctx.shadowBlur = 0;
+    ctx.fillRect(-24, -6, 2, 4);
+    ctx.fillRect(-24, 2, 2, 4);
+
+    ctx.restore();
+  };
+
+  const handleExit = () => {
+    cancelAnimationFrame(gameLoopId.current);
+    setGameState("IDLE");
+  };
 
   return (
     <div className="arcade-section-container">
-      <div 
-        className={`arcade-window ${isFocused ? "focused" : ""}`}
-        tabIndex="0"
-        onFocus={() => setIsFocused(true)}
-        onBlur={() => setIsFocused(false)}
-      >
-        {/* Header */}
-        <div className="arcade-header">
-          <div className="arcade-title">
-            <FaGamepad style={{ animation: "pulse 1.5s infinite" }} />
-            BUG_HUNTER_V1.EXE
+      {/* Inline Space Mission Launcher Dashboard */}
+      {gameState === "IDLE" && (
+        <div className="space-terminal">
+          <div className="terminal-glitch-border"></div>
+          <div className="terminal-header">
+            <FaRocket className="rocket-icon" />
+            <h3>SPACE MISSION TERMINAL v2.5</h3>
           </div>
-          <div style={{ display: "flex", gap: "10px", alignItems: "center" }}>
-            <button 
-              className="audio-toggle-btn"
-              onClick={() => setMuted(!muted)}
-              style={{ color: "#c770f0", fontSize: "14px", textDecoration: "none" }}
-              aria-label={muted ? "Unmute" : "Mute"}
-            >
-              {muted ? <FaVolumeMute /> : <FaVolumeUp />}
+
+          <div className="terminal-body">
+            <p className="terminal-desc">
+              An astronaut is lost in cyberspace! Clean up code-leaks, compiler warnings, and floating bugs that are drifting across the portfolio layout.
+            </p>
+            <div className="terminal-stats">
+              <div className="stat-card">
+                <FaTrophy className="stat-icon trophy" />
+                <div className="stat-info">
+                  <span className="stat-label">RECORD HIGH SCORE</span>
+                  <span className="stat-value neon-purple">{highScore} PTS</span>
+                </div>
+              </div>
+            </div>
+
+            <div className="controls-guide">
+              <h5>MISSION CONTROLS</h5>
+              <ul>
+                <li><span>WASD / Arrow Keys</span>: Floating Movement (drift inertia)</li>
+                <li><span>Mouse Movement</span>: Aim Laser Guns</li>
+                <li><span>Left Click / Spacebar</span>: Fire Laser Cannon</li>
+              </ul>
+            </div>
+
+            <button className="launch-mission-btn" onClick={initiateGame}>
+              LAUNCH SPACE MISSION
             </button>
           </div>
         </div>
+      )}
 
-        {/* Screen Area */}
-        <div className="arcade-screen-container">
-          <div className="crt-effect" onClick={() => { if(gameState !== "PLAYING") startGame(); }}>
-            <canvas 
-              ref={canvasRef} 
-              width={GRID_SIZE_X * CELL_SIZE} 
-              height={GRID_SIZE_Y * CELL_SIZE} 
-              className="arcade-canvas" 
-            />
-            {/* Focus overlay */}
-            {!isFocused && (
-              <div className="arcade-focus-overlay">
-                <span className="focus-text">CLICK TO PLAY</span>
-                <span className="focus-subtext">Click here to capture controls</span>
+      {/* Global Full-Screen Game Overlay */}
+      {(gameState === "COUNTDOWN" || gameState === "PLAYING" || gameState === "GAMEOVER") && (
+        <div className={`space-game-overlay ${screenShake ? "shake-effect" : ""}`}>
+          
+          {/* Transparent Canvas Layer */}
+          <canvas ref={canvasRef} className="space-game-canvas" />
+
+          {/* Countdown timer */}
+          {gameState === "COUNTDOWN" && (
+            <div className="countdown-overlay">
+              <span className="countdown-num">{countdown === 0 ? "LAUNCH!" : countdown}</span>
+            </div>
+          )}
+
+          {/* Interactive HUD HUD */}
+          {gameState === "PLAYING" && (
+            <div className="game-hud-panel">
+              <div className="hud-metric">
+                <span className="hud-title">SCORE:</span>
+                <span className="hud-metric-value text-cyan">{score}</span>
               </div>
-            )}
-          </div>
 
-          {/* HUD Info */}
-          <div className="arcade-hud">
-            <div className="hud-item">
-              <span>SCORE:</span>
-              <span className="hud-value">{score}</span>
-            </div>
-            <div className="hud-item">
-              <span>HI-SCORE:</span>
-              <span className="hud-value">{highScore}</span>
-            </div>
-          </div>
+              <div className="hud-shield-container">
+                <span className="hud-title"><FaHeart className="heart-icon" /> SHIELD:</span>
+                <div className="shield-bar-bg">
+                  <div className="shield-bar-fill" style={{ width: `${shield}%` }}></div>
+                </div>
+              </div>
 
-          {/* Virtual arrow keys for Mobile support */}
-          <div className="arcade-controls">
-            <div className="control-row">
-              <button 
-                className="control-btn" 
-                onClick={() => handleVirtualDir(0, -1)}
-                aria-label="Move Up"
-              >
-                <FaArrowUp />
-              </button>
+              <div className="hud-buttons">
+                <button 
+                  className="hud-audio-btn" 
+                  onClick={() => setMuted(!muted)}
+                  aria-label={muted ? "Unmute" : "Mute"}
+                >
+                  {muted ? <FaVolumeMute /> : <FaVolumeUp />}
+                </button>
+                <button className="exit-mission-btn" onClick={handleExit}>
+                  EXIT MISSION
+                </button>
+              </div>
             </div>
-            <div className="control-row" style={{ margin: "5px 0" }}>
-              <button 
-                className="control-btn" 
-                onClick={() => handleVirtualDir(-1, 0)}
-                aria-label="Move Left"
-              >
-                <FaArrowLeft />
-              </button>
-              <div style={{ width: "50px" }}></div>
-              <button 
-                className="control-btn" 
-                onClick={() => handleVirtualDir(1, 0)}
-                aria-label="Move Right"
-              >
-                <FaArrowRight />
-              </button>
-            </div>
-            <div className="control-row">
-              <button 
-                className="control-btn" 
-                onClick={() => handleVirtualDir(0, 1)}
-                aria-label="Move Down"
-              >
-                <FaArrowDown />
-              </button>
-            </div>
-          </div>
-        </div>
+          )}
 
-        {/* Bottom instructions */}
-        <div className="arcade-footer">
-          {gameState === "PLAYING" ? (
-            <span>Use Arrow Keys or WASD to control your Dev-Snake.</span>
-          ) : (
-            <span>Click the screen or press SPACE to launch the arcade game.</span>
+          {/* Retro Game Over screen */}
+          {gameState === "GAMEOVER" && (
+            <div className="gameover-overlay">
+              <div className="gameover-box">
+                <h1 className="error-title">CRITICAL ERROR</h1>
+                <p className="error-desc">Astronaut shield fully depleted. Cyber-bugs took over.</p>
+                
+                <div className="gameover-stats">
+                  <div className="gameover-stat">
+                    <span>FINAL SCORE:</span>
+                    <span className="score-val text-cyan">{score}</span>
+                  </div>
+                  {score >= highScore && score > 0 && (
+                    <div className="new-record-tag">NEW RECORD ESTABLISHED!</div>
+                  )}
+                </div>
+
+                <div className="gameover-actions">
+                  <button className="retry-btn" onClick={initiateGame}>
+                    RETRY MISSION
+                  </button>
+                  <button className="exit-btn" onClick={handleExit}>
+                    CLOSE CONSOLE
+                  </button>
+                </div>
+              </div>
+            </div>
           )}
         </div>
-      </div>
+      )}
     </div>
   );
 }

@@ -69,7 +69,7 @@ function NavBar() {
                 href="#arcade" 
                 onClick={() => updateExpanded(false)}
               >
-                Arcade 🕹️
+                Space Mission 🚀
               </Nav.Link>
             </Nav.Item>
           </Nav>

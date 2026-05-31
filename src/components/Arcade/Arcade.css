@@ -1,258 +1,506 @@
-/* Section container for inline arcade */
-.arcade-section-container {
+/* ==========================================
+   Space Mission Launcher Dashboard (Inline)
+   ========================================== */
+.space-terminal {
   position: relative;
-  z-index: 1;
-  padding-top: 100px;
-  padding-bottom: 70px;
-  background-image: var(--section-background-color);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding-left: 20px;
-  padding-right: 20px;
-}
-
-/* Retro Cabinet / Window Container */
-.arcade-window {
   width: 100%;
   max-width: 600px;
-  background: #110922;
-  border: 3px solid #be50f4;
-  border-radius: 12px;
-  box-shadow: 0 0 20px rgba(190, 80, 244, 0.2), inset 0 0 20px rgba(0, 0, 0, 0.8);
+  background: rgba(17, 9, 34, 0.7);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  border: 2px solid rgba(190, 80, 244, 0.45);
+  border-radius: 16px;
+  box-shadow: 0 8px 32px rgba(10, 4, 22, 0.5), 
+              0 0 20px rgba(190, 80, 244, 0.15), 
+              inset 0 0 15px rgba(190, 80, 244, 0.1);
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  position: relative;
-  font-family: 'Space Grotesk', 'Courier New', monospace;
+  padding: 25px;
+  font-family: 'Space Grotesk', -apple-system, sans-serif;
+  color: #ffffff;
   transition: all 0.3s ease;
-  outline: none;
 }
 
-.arcade-window.focused {
-  border-color: #00ffcc;
-  box-shadow: 0 0 30px rgba(0, 255, 204, 0.35), inset 0 0 20px rgba(0, 0, 0, 0.8);
+.space-terminal:hover {
+  border-color: rgba(190, 80, 244, 0.85);
+  box-shadow: 0 12px 40px rgba(10, 4, 22, 0.6), 
+              0 0 25px rgba(190, 80, 244, 0.3), 
+              inset 0 0 20px rgba(190, 80, 244, 0.15);
 }
 
-/* Header Bar */
-.arcade-header {
-  background: #1c0e35;
-  padding: 10px 18px;
+.terminal-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  border-bottom: 1px solid rgba(190, 80, 244, 0.25);
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.rocket-icon {
+  font-size: 1.6rem;
+  color: #00ffcc;
+  filter: drop-shadow(0 0 5px #00ffcc);
+  animation: floatRocket 3s ease-in-out infinite;
+}
+
+.terminal-header h3 {
+  font-size: 1.25rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  color: #be50f4;
+  margin: 0;
+  text-shadow: 0 0 8px rgba(190, 80, 244, 0.5);
+}
+
+.terminal-desc {
+  font-size: 0.95rem;
+  line-height: 1.6;
+  color: rgba(255, 255, 255, 0.8);
+  margin-bottom: 20px;
+}
+
+/* Terminal Statistics Dashboard */
+.terminal-stats {
+  display: flex;
+  gap: 15px;
+  margin-bottom: 20px;
+}
+
+.stat-card {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 12px 18px;
+}
+
+.stat-icon {
+  font-size: 1.8rem;
+}
+
+.stat-icon.trophy {
+  color: #ffcc00;
+  filter: drop-shadow(0 0 6px rgba(255, 204, 0, 0.4));
+}
+
+.stat-info {
+  display: flex;
+  flex-direction: column;
+}
+
+.stat-label {
+  font-size: 0.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: rgba(255, 255, 255, 0.55);
+}
+
+.stat-value {
+  font-size: 1.25rem;
+  font-weight: 700;
+  font-family: monospace;
+}
+
+.neon-purple {
+  color: #c770f0;
+  text-shadow: 0 0 8px rgba(199, 112, 240, 0.6);
+}
+
+/* Controls Guide Box */
+.controls-guide {
+  background: rgba(0, 0, 0, 0.35);
+  border: 1px solid rgba(190, 80, 244, 0.2);
+  border-radius: 10px;
+  padding: 15px 18px;
+  margin-bottom: 25px;
+}
+
+.controls-guide h5 {
+  font-size: 0.85rem;
+  font-weight: bold;
+  letter-spacing: 1px;
+  color: #00ffcc;
+  margin-top: 0;
+  margin-bottom: 10px;
+}
+
+.controls-guide ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.controls-guide li {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.75);
+  margin-bottom: 6px;
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  border-bottom: 2px solid #be50f4;
+}
+
+.controls-guide li span {
+  font-weight: bold;
+  color: #c770f0;
+}
+
+.launch-mission-btn {
+  background: linear-gradient(135deg, #be50f4 0%, #700c86 100%);
+  border: none;
+  border-radius: 12px;
+  color: #ffffff;
+  font-size: 1.05rem;
+  font-weight: bold;
+  letter-spacing: 1.5px;
+  padding: 14px 20px;
+  cursor: pointer;
+  box-shadow: 0 4px 15px rgba(190, 80, 244, 0.4);
   transition: all 0.3s ease;
 }
 
-.arcade-window.focused .arcade-header {
-  border-bottom-color: #00ffcc;
-  background: #0d1a2d;
+.launch-mission-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 22px rgba(190, 80, 244, 0.6), 0 0 10px rgba(0, 255, 204, 0.3);
+  background: linear-gradient(135deg, #cd5ff8 0%, #83109d 100%);
 }
 
-.arcade-window.focused .arcade-title {
-  color: #00ffcc;
+.launch-mission-btn:active {
+  transform: translateY(0);
 }
 
-.arcade-title {
-  color: #c770f0;
-  font-weight: 700;
-  font-size: 1.1rem;
-  letter-spacing: 1px;
-  display: flex;
-  align-items: center;
-  gap: 8px;
+
+/* ==========================================
+   Global Full-Screen Game Overlay Layout
+   ========================================== */
+.space-game-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 999999;
+  background: radial-gradient(circle, rgba(12, 5, 24, 0.75) 0%, rgba(5, 2, 10, 0.93) 100%);
+  backdrop-filter: blur(2px);
+  overflow: hidden;
+  pointer-events: auto;
+  user-select: none;
+  animation: fadeIn 0.3s ease-out;
 }
 
-/* Focus Overlay on screen */
-.arcade-focus-overlay {
+.space-game-canvas {
   position: absolute;
   top: 0;
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(10, 4, 22, 0.88);
-  backdrop-filter: blur(3px);
+  display: block;
+}
+
+/* ==========================================
+   HUD Layout
+   ========================================== */
+.game-hud-panel {
+  position: absolute;
+  top: 25px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 90%;
+  max-width: 900px;
+  height: 60px;
+  background: rgba(18, 9, 34, 0.65);
+  backdrop-filter: blur(15px);
+  -webkit-backdrop-filter: blur(15px);
+  border: 1.5px solid rgba(199, 112, 240, 0.3);
+  border-radius: 30px;
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
+  justify-content: space-between;
+  padding: 0 30px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6), 
+              inset 0 0 15px rgba(199, 112, 240, 0.05);
   z-index: 10;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-.arcade-focus-overlay:hover {
-  background: rgba(10, 4, 22, 0.78);
-}
-
-.focus-text {
-  color: #00ffcc;
-  font-size: 1.6rem;
-  font-weight: bold;
-  letter-spacing: 2px;
-  margin-bottom: 8px;
-  text-shadow: 0 0 10px rgba(0, 255, 204, 0.6);
-  animation: pulse 1.5s infinite;
-}
-
-.focus-subtext {
-  color: rgba(255, 255, 255, 0.6);
-  font-size: 0.85rem;
-  letter-spacing: 0.5px;
-}
-
-
-/* CRT Cabinet Screen */
-.arcade-screen-container {
-  position: relative;
-  background: #05020a;
-  padding: 15px;
+.hud-metric {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  justify-content: center;
-  flex-grow: 1;
-  overflow: hidden;
+  gap: 10px;
 }
 
-/* CRT Screen Effect Overlay */
-.crt-effect {
-  position: relative;
-  width: 100%;
-  max-width: 480px;
+.hud-title {
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1.5px;
+  color: rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hud-metric-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+.text-cyan {
+  color: #00ffcc;
+  text-shadow: 0 0 10px rgba(0, 255, 204, 0.7);
+}
+
+.hud-shield-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 35%;
+}
+
+.heart-icon {
+  color: #ff3366;
+  filter: drop-shadow(0 0 4px #ff3366);
+}
+
+.shield-bar-bg {
+  flex-grow: 1;
+  height: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.15);
   border-radius: 6px;
   overflow: hidden;
-  box-shadow: inset 0 0 40px rgba(0, 255, 0, 0.15), 0 0 15px rgba(0, 0, 0, 0.5);
-  border: 4px solid #1a0e2d;
-  background: #020105;
+  padding: 1px;
 }
 
-.crt-effect::before {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-  z-index: 2;
-  background-size: 100% 4px, 6px 100%;
-  pointer-events: none;
+.shield-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #ff3366 0%, #ff5e62 100%);
+  box-shadow: 0 0 10px rgba(255, 51, 102, 0.6);
+  border-radius: 4px;
+  transition: width 0.15s ease-out;
 }
 
-/* Screen scanline animation */
-.crt-effect::after {
-  content: " ";
-  display: block;
-  position: absolute;
-  top: 0; left: 0; bottom: 0; right: 0;
-  background: rgba(18, 16, 16, 0.1);
-  opacity: 0;
-  z-index: 2;
-  pointer-events: none;
-  animation: flicker 0.15s infinite;
-}
-
-/* Canvas styling */
-.arcade-canvas {
-  display: block;
-  width: 100%;
-  aspect-ratio: 4 / 3;
-  background-color: #030107;
-}
-
-/* Game Interface Overlays (HUD) */
-.arcade-hud {
+.hud-buttons {
   display: flex;
-  justify-content: space-between;
-  width: 100%;
-  max-width: 480px;
-  margin-top: 10px;
-  color: #c770f0;
-  font-size: 0.9rem;
-  padding: 0 5px;
-}
-
-.hud-item {
-  display: flex;
-  gap: 5px;
-}
-
-.hud-value {
-  color: #fff;
-  font-weight: bold;
-}
-
-/* On-Screen Mobile Controller */
-.arcade-controls {
-  display: none;
-  flex-direction: column;
   align-items: center;
-  margin: 15px 0 5px;
-  width: 100%;
+  gap: 15px;
 }
 
-.control-row {
-  display: flex;
-  gap: 12px;
-}
-
-.control-btn {
-  width: 50px;
-  height: 50px;
+.hud-audio-btn {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: #be50f4;
   border-radius: 50%;
-  background: #251645;
-  border: 2px solid #be50f4;
-  color: #fff;
-  font-size: 20px;
+  width: 38px;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  user-select: none;
-  touch-action: manipulation;
-  transition: all 0.1s;
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+  transition: all 0.2s;
 }
 
-.control-btn:active {
-  background: #be50f4;
-  transform: scale(0.9);
-  box-shadow: 0 0 10px rgba(190, 80, 244, 0.6);
+.hud-audio-btn:hover {
+  background: rgba(199, 112, 240, 0.15);
+  border-color: rgba(199, 112, 240, 0.4);
+  color: #ffffff;
 }
 
-/* Instructions / Footer in Modal */
-.arcade-footer {
-  text-align: center;
-  color: rgba(255, 255, 255, 0.6);
+.exit-mission-btn {
+  background: rgba(255, 51, 51, 0.12);
+  border: 1.5px solid rgba(255, 51, 51, 0.35);
+  border-radius: 20px;
+  color: #ff5555;
   font-size: 0.75rem;
-  padding: 12px;
-  background: #140b29;
-  border-top: 1px solid rgba(190, 80, 244, 0.15);
-}
-
-.audio-toggle-btn {
-  background: none;
-  border: none;
-  color: #be50f4;
+  font-weight: 700;
+  letter-spacing: 1px;
+  padding: 8px 16px;
   cursor: pointer;
+  transition: all 0.2s;
+}
+
+.exit-mission-btn:hover {
+  background: rgba(255, 51, 51, 0.25);
+  border-color: rgba(255, 51, 51, 0.6);
+  color: #ffffff;
+  box-shadow: 0 0 12px rgba(255, 51, 51, 0.3);
+}
+
+
+/* ==========================================
+   Countdown Overlay
+   ========================================== */
+.countdown-overlay {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 100;
+}
+
+.countdown-num {
+  font-size: 6rem;
+  font-weight: 900;
+  color: #be50f4;
+  text-shadow: 0 0 30px rgba(190, 80, 244, 0.8), 
+              0 0 60px rgba(0, 255, 204, 0.4);
+  animation: countdownPulse 1s ease-in-out infinite;
+}
+
+
+/* ==========================================
+   Game Over Screen Overlay
+   ========================================== */
+.gameover-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(5, 2, 10, 0.88);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+  animation: fadeIn 0.4s ease-out;
+}
+
+.gameover-box {
+  width: 90%;
+  max-width: 500px;
+  background: rgba(18, 9, 34, 0.8);
+  border: 3px solid #ff3366;
+  border-radius: 20px;
+  padding: 35px 30px;
+  text-align: center;
+  box-shadow: 0 15px 40px rgba(0, 0, 0, 0.8), 
+              0 0 30px rgba(255, 51, 102, 0.35);
+  animation: scaleIn 0.3s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.error-title {
+  font-size: 2.2rem;
+  font-weight: 900;
+  letter-spacing: 2px;
+  color: #ff3366;
+  text-shadow: 0 0 15px rgba(255, 51, 102, 0.6);
+  margin-top: 0;
+  margin-bottom: 12px;
+}
+
+.error-desc {
+  font-size: 0.95rem;
+  color: rgba(255, 255, 255, 0.7);
+  line-height: 1.5;
+  margin-bottom: 25px;
+}
+
+.gameover-stats {
+  background: rgba(0, 0, 0, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  padding: 15px;
+  margin-bottom: 30px;
+}
+
+.gameover-stat {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 1rem;
   font-weight: bold;
-  text-decoration: underline;
-  padding: 0;
-  margin-left: 5px;
+  color: rgba(255, 255, 255, 0.6);
+  padding: 5px 10px;
 }
 
-/* Show controller on touch devices / smaller viewports */
-@media (max-width: 768px) {
-  .arcade-controls {
-    display: flex;
-  }
-  .arcade-hud {
-    font-size: 0.8rem;
-  }
+.score-val {
+  font-size: 1.5rem;
+  font-family: monospace;
 }
 
-/* Keyframes */
+.new-record-tag {
+  margin-top: 10px;
+  font-size: 0.8rem;
+  font-weight: 800;
+  color: #ffcc00;
+  letter-spacing: 1.5px;
+  text-shadow: 0 0 8px rgba(255, 204, 0, 0.6);
+  animation: blink 1.2s infinite;
+}
+
+.gameover-actions {
+  display: flex;
+  gap: 15px;
+}
+
+.retry-btn {
+  flex: 1.2;
+  background: linear-gradient(135deg, #ff3366 0%, #cc0033 100%);
+  border: none;
+  border-radius: 10px;
+  color: #ffffff;
+  font-size: 0.95rem;
+  font-weight: bold;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+  box-shadow: 0 4px 12px rgba(255, 51, 102, 0.3);
+}
+
+.retry-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(255, 51, 102, 0.5);
+  background: linear-gradient(135deg, #ff5c85 0%, #e6003a 100%);
+}
+
+.exit-btn {
+  flex: 0.8;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(255, 255, 255, 0.15);
+  border-radius: 10px;
+  color: rgba(255, 255, 255, 0.85);
+  font-size: 0.95rem;
+  font-weight: bold;
+  padding: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.exit-btn:hover {
+  background: rgba(255, 255, 255, 0.12);
+  color: #ffffff;
+}
+
+
+/* ==========================================
+   Animations & Game FX
+   ========================================== */
+.shake-effect {
+  animation: shake 0.2s cubic-bezier(.36,.07,.19,.97) both;
+}
+
+@keyframes shake {
+  10%, 90% { transform: translate3d(-2px, 0, 0); }
+  20%, 80% { transform: translate3d(3px, 0, 0); }
+  30%, 50%, 70% { transform: translate3d(-5px, 0, 0); }
+  40%, 60% { transform: translate3d(5px, 0, 0); }
+}
+
+@keyframes floatRocket {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-5px) rotate(3deg); }
+}
+
+@keyframes countdownPulse {
+  0% { transform: scale(0.85); opacity: 0.6; }
+  50% { transform: scale(1.05); opacity: 1; }
+  100% { transform: scale(0.85); opacity: 0.6; }
+}
+
 @keyframes fadeIn {
   from { opacity: 0; }
   to { opacity: 1; }
@@ -263,8 +511,26 @@
   to { transform: scale(1); opacity: 1; }
 }
 
-@keyframes flicker {
-  0% { opacity: 0.15; }
-  50% { opacity: 0.18; }
-  100% { opacity: 0.15; }
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+
+
+/* Responsive styles */
+@media (max-width: 768px) {
+  .game-hud-panel {
+    padding: 0 15px;
+    height: 50px;
+    top: 15px;
+  }
+  .hud-metric-value {
+    font-size: 1.1rem;
+  }
+  .hud-shield-container {
+    width: 45%;
+  }
+  .exit-mission-btn {
+    padding: 6px 12px;
+  }
 }
