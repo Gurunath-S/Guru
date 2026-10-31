@@ -201,6 +201,7 @@ export default function Arcade() {
   const gameShieldRef = useRef(100);
   const lastSpawnTime = useRef(0);
   const spawnInterval = useRef(1500); // starts spawning every 1.5 seconds
+  const lastReportedScore = useRef(0);
 
   // Initialize sounds muted state
   useEffect(() => {
@@ -300,6 +301,7 @@ export default function Arcade() {
     bugsRef.current = [];
     particlesRef.current = [];
     gameScoreRef.current = 0;
+    lastReportedScore.current = 0;
     gameShieldRef.current = 100;
     spawnInterval.current = 1500;
     lastSpawnTime.current = performance.now();
@@ -309,13 +311,14 @@ export default function Arcade() {
 
     // Populate starfield background
     const stars = [];
-    const starCount = Math.floor((window.innerWidth * window.innerHeight) / 6000);
+    const starCount = Math.floor((window.innerWidth * window.innerHeight) / 7000);
     for (let i = 0; i < starCount; i++) {
       stars.push({
         x: Math.random() * window.innerWidth,
         y: Math.random() * window.innerHeight,
         size: Math.random() * 2 + 0.5,
-        speed: Math.random() * 0.8 + 0.2
+        speed: Math.random() * 0.8 + 0.2,
+        alpha: Math.random() * 0.5 + 0.3
       });
     }
     starsRef.current = stars;
@@ -416,10 +419,11 @@ export default function Arcade() {
 
   const createExplosion = (x, y, color) => {
     sounds.playExplosion();
-    // Spawns 12 bright exploding particles
-    for (let i = 0; i < 15; i++) {
+    // Cap total active particles to prevent lag
+    if (particlesRef.current.length > 70) return;
+    for (let i = 0; i < 8; i++) {
       const angle = Math.random() * Math.PI * 2;
-      const speed = Math.random() * 4 + 1.5;
+      const speed = Math.random() * 3.5 + 1.5;
       particlesRef.current.push({
         x,
         y,
@@ -427,8 +431,8 @@ export default function Arcade() {
         vy: Math.sin(angle) * speed,
         color,
         life: 1.0,
-        decay: Math.random() * 0.03 + 0.02,
-        size: Math.random() * 4 + 1.5
+        decay: Math.random() * 0.04 + 0.03,
+        size: Math.random() * 3 + 1.5
       });
     }
   };
@@ -469,11 +473,11 @@ export default function Arcade() {
   };
 
   const updateGame = () => {
-    // 1. Spawning
+    // 1. Spawning - bounded to prevent infinite enemy accumulation
     const now = performance.now();
-    // Accelerate spawn intervals over score scaling
-    const dynamicInterval = Math.max(300, spawnInterval.current - (gameScoreRef.current * 3));
-    if (now - lastSpawnTime.current > dynamicInterval) {
+    const MAX_BUGS = 18;
+    const dynamicInterval = Math.max(550, spawnInterval.current - (gameScoreRef.current * 1.5));
+    if (bugsRef.current.length < MAX_BUGS && now - lastSpawnTime.current > dynamicInterval) {
       spawnBug();
       lastSpawnTime.current = now;
     }
@@ -565,7 +569,7 @@ export default function Arcade() {
 
     // 3. Update stars parallax effect
     starsRef.current.forEach((star) => {
-      star.x -= star.speed * (astro.vx * 0.1 + 0.5); // base drift + player velocity react
+      star.x -= star.speed * (astro.vx * 0.1 + 0.5);
       if (star.x < 0) {
         star.x = window.innerWidth;
         star.y = Math.random() * window.innerHeight;
@@ -577,7 +581,6 @@ export default function Arcade() {
       laser.x += laser.vx;
       laser.y += laser.vy;
 
-      // Keep if within screen boundaries
       return (
         laser.x >= 0 &&
         laser.x <= window.innerWidth &&
@@ -595,35 +598,38 @@ export default function Arcade() {
     });
 
     // 6. Update bugs and collision checks
+    const activeLasers = lasersRef.current;
     bugsRef.current = bugsRef.current.filter((bug) => {
       bug.x += bug.vx;
       bug.y += bug.vy;
       bug.angle += bug.rotationSpeed;
 
-      // Check laser collision
+      // Check laser collision using squared distances (no Math.sqrt) with early exit
       let hit = false;
-      lasersRef.current.forEach((laser) => {
+      for (let i = 0; i < activeLasers.length; i++) {
+        const laser = activeLasers[i];
+        if (laser.x < -1000) continue;
         const ldx = laser.x - bug.x;
         const ldy = laser.y - bug.y;
-        const dist = Math.sqrt(ldx * ldx + ldy * ldy);
-        if (dist < bug.radius + laser.radius) {
+        const rSum = bug.radius + laser.radius;
+        if (ldx * ldx + ldy * ldy < rSum * rSum) {
           hit = true;
           laser.x = -9999; // destroy laser
+          break;
         }
-      });
+      }
 
       if (hit) {
         createExplosion(bug.x, bug.y, bug.color);
         gameScoreRef.current += bug.points;
-        setScore(gameScoreRef.current);
         return false; // remove bug
       }
 
-      // Check astronaut collision
+      // Check astronaut collision using squared distances
       const adx = astro.x - bug.x;
       const ady = astro.y - bug.y;
-      const distToAstro = Math.sqrt(adx * adx + ady * ady);
-      if (distToAstro < bug.radius + astro.radius) {
+      const aSum = bug.radius + astro.radius;
+      if (adx * adx + ady * ady < aSum * aSum) {
         createExplosion(bug.x, bug.y, "#ff3333");
         triggerDamage();
 
@@ -644,6 +650,12 @@ export default function Arcade() {
         bug.y <= window.innerHeight + 100
       );
     });
+
+    // Throttled HUD score sync (max once per frame, preventing React re-render thrashing)
+    if (lastReportedScore.current !== gameScoreRef.current) {
+      lastReportedScore.current = gameScoreRef.current;
+      setScore(gameScoreRef.current);
+    }
   };
 
   const drawGame = (ctx) => {
@@ -651,64 +663,68 @@ export default function Arcade() {
     ctx.fillStyle = "rgba(10, 4, 22, 0.4)";
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    // 1. Draw Starfield Parallax
-    starsRef.current.forEach((star) => {
-      ctx.fillStyle = `rgba(255, 255, 255, ${0.4 + Math.random() * 0.4})`;
+    // 1. Draw Starfield Parallax (Zero string allocations)
+    ctx.fillStyle = "#ffffff";
+    for (let i = 0; i < starsRef.current.length; i++) {
+      const star = starsRef.current[i];
+      ctx.globalAlpha = star.alpha;
       ctx.beginPath();
       ctx.arc(star.x, star.y, star.size, 0, Math.PI * 2);
       ctx.fill();
-    });
+    }
+    ctx.globalAlpha = 1.0;
 
-    // 2. Draw Lasers
-    lasersRef.current.forEach((laser) => {
+    // 2. Draw Lasers (Bright core with vibrant neon aura, 0 shadowBlur)
+    for (let i = 0; i < lasersRef.current.length; i++) {
+      const laser = lasersRef.current[i];
       ctx.save();
       ctx.translate(laser.x, laser.y);
       ctx.rotate(laser.angle);
       
-      // Neon green light tracer line
-      ctx.shadowColor = "#00ffcc";
-      ctx.shadowBlur = 10;
       ctx.fillStyle = "#00ffcc";
-      ctx.fillRect(-8, -1.5, 16, 3);
+      ctx.fillRect(-8, -2, 16, 4);
+      ctx.fillStyle = "#ffffff";
+      ctx.fillRect(-6, -1, 12, 2);
       ctx.restore();
-    });
+    }
 
-    // 3. Draw Bugs (floating text errors or emojis)
-    bugsRef.current.forEach((bug) => {
+    // 3. Draw Bugs (floating text errors with retro cyber-badges, 0 shadowBlur Gaussian overhead)
+    ctx.font = "bold 14px monospace";
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+
+    for (let i = 0; i < bugsRef.current.length; i++) {
+      const bug = bugsRef.current[i];
       ctx.save();
       ctx.translate(bug.x, bug.y);
       ctx.rotate(bug.angle);
 
-      // Red/pink neon glow for errors
-      ctx.shadowColor = bug.color;
-      ctx.shadowBlur = 12;
+      // Cyberpunk translucent badge background
+      ctx.fillStyle = "rgba(10, 4, 25, 0.88)";
+      ctx.fillRect(-bug.radius, -12, bug.radius * 2, 24);
+
+      // Neon error border
+      ctx.strokeStyle = bug.color;
+      ctx.lineWidth = 1.5;
+      ctx.strokeRect(-bug.radius, -12, bug.radius * 2, 24);
+
+      // Error text
       ctx.fillStyle = bug.color;
-      ctx.font = "bold 15px monospace";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
       ctx.fillText(bug.text, 0, 0);
 
-      // Draw bounding box details for retro vibe
-      ctx.strokeStyle = "rgba(255, 255, 255, 0.15)";
-      ctx.lineWidth = 1;
-      ctx.shadowBlur = 0;
-      ctx.strokeRect(-bug.radius, -10, bug.radius * 2, 20);
-
       ctx.restore();
-    });
+    }
 
-    // 4. Draw Particles
-    particlesRef.current.forEach((p) => {
+    // 4. Draw Particles (Direct GPU circles, 0 shadowBlur)
+    for (let i = 0; i < particlesRef.current.length; i++) {
+      const p = particlesRef.current[i];
       ctx.fillStyle = p.color;
       ctx.globalAlpha = p.life;
-      ctx.shadowColor = p.color;
-      ctx.shadowBlur = 6;
       ctx.beginPath();
       ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
       ctx.fill();
-    });
+    }
     ctx.globalAlpha = 1.0;
-    ctx.shadowBlur = 0;
 
     // 5. Draw Astronaut
     const astro = astronautRef.current;
@@ -716,11 +732,7 @@ export default function Arcade() {
     ctx.translate(astro.x, astro.y);
     ctx.rotate(astro.angle);
 
-    // Neon drop shadow
-    ctx.shadowColor = "#be50f4";
-    ctx.shadowBlur = 15;
-
-    // Backpack (Left of orientation)
+    // Backpack
     ctx.fillStyle = "#a588c0";
     ctx.fillRect(-22, -10, 8, 20);
 
@@ -730,23 +742,20 @@ export default function Arcade() {
     ctx.arc(-2, 0, 14, 0, Math.PI * 2);
     ctx.fill();
 
-    // Helmet visor (Dark faceplate with HUD glow)
+    // Helmet visor (Dark faceplate)
     ctx.fillStyle = "#2d1950";
     ctx.beginPath();
     ctx.arc(4, 0, 10, 0, Math.PI * 2);
     ctx.fill();
 
-    // Visor Glass
+    // Visor Glass with cyan reflection
     ctx.fillStyle = "#00ffcc";
-    ctx.shadowColor = "#00ffcc";
-    ctx.shadowBlur = 6;
     ctx.beginPath();
     ctx.ellipse(6, 0, 5, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
     // Thruster nozzles (Rear)
     ctx.fillStyle = "#333333";
-    ctx.shadowBlur = 0;
     ctx.fillRect(-24, -6, 2, 4);
     ctx.fillRect(-24, 2, 2, 4);
 
