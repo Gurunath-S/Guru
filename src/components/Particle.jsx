@@ -127,8 +127,8 @@ function Particle() {
         params={{
           particles: {
             number: {
-              value: 160,
-              density: { enable: true, value_area: 1500 },
+              value: 120,
+              density: { enable: true, value_area: 1200 },
             },
             color: {
               value: ["#c770f0", "#3a7bd5", "#00d2ff", "#ffffff"],
@@ -155,10 +155,7 @@ function Particle() {
           interactivity: {
             events: {
               onDiv: {
-                enable: true,
-                selectors: ".space-object",
-                mode: "repulse",
-                type: "circle",
+                enable: false,
               },
               onclick: {
                 enable: true,
