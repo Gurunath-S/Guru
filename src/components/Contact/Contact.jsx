@@ -1,8 +1,5 @@
 import React, { useState, useRef } from "react";
-
-
 import { Container } from "react-bootstrap";
-import Particle from "../Particle";
 import { motion } from "framer-motion";
 import { FaEnvelope, FaLinkedinIn, FaGithub, FaPaperPlane } from "react-icons/fa";
 import "./Contact.css";
@@ -57,7 +54,6 @@ function Contact() {
 
     return (
         <Container fluid className="contact-section">
-            <Particle />
             <Container className="contact-container">
                 <motion.div
                     initial={{ opacity: 0, y: 40 }}

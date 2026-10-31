@@ -1,7 +1,6 @@
 import React, { useState } from "react";
 import { Container, Row, Col } from "react-bootstrap";
 import ProjectCard from "./ProjectCards";
-import Particle from "../Particle";
 import { motion } from "framer-motion";
 import chatapp from "../../Assets/Projects/chatapp.png";
 import bda4 from "../../Assets/Projects/bda4.png";
@@ -58,7 +57,6 @@ function Projects() {
 
   return (
     <Container fluid className="project-section">
-      <Particle />
       <Container>
         <motion.div
           initial={{ opacity: 0, y: 30 }}
