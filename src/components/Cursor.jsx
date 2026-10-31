@@ -12,40 +12,45 @@ function Cursor() {
         let mouseX = 0, mouseY = 0;
         let ringX = 0, ringY = 0;
 
+        let animId;
+
         const onMouseMove = (e) => {
             mouseX = e.clientX;
             mouseY = e.clientY;
-            dot.style.transform = `translate(${mouseX - 4}px, ${mouseY - 4}px)`;
+            dot.style.transform = `translate3d(${mouseX - 4}px, ${mouseY - 4}px, 0)`;
         };
 
         const animate = () => {
-            ringX += (mouseX - ringX) * 0.12;
-            ringY += (mouseY - ringY) * 0.12;
-            ring.style.transform = `translate(${ringX - 18}px, ${ringY - 18}px)`;
-            requestAnimationFrame(animate);
+            ringX += (mouseX - ringX) * 0.15;
+            ringY += (mouseY - ringY) * 0.15;
+            ring.style.transform = `translate3d(${ringX - 18}px, ${ringY - 18}px, 0)`;
+            animId = requestAnimationFrame(animate);
         };
 
         const onMouseDown = () => ring.classList.add("clicking");
         const onMouseUp = () => ring.classList.remove("clicking");
 
-        const onMouseEnterLink = () => ring.classList.add("hovering");
-        const onMouseLeaveLink = () => ring.classList.remove("hovering");
+        const onMouseOver = (e) => {
+            if (e.target.closest("a, button, [role='button'], input, textarea")) {
+                ring.classList.add("hovering");
+            } else {
+                ring.classList.remove("hovering");
+            }
+        };
 
-        window.addEventListener("mousemove", onMouseMove);
-        window.addEventListener("mousedown", onMouseDown);
-        window.addEventListener("mouseup", onMouseUp);
-
-        document.querySelectorAll("a, button").forEach((el) => {
-            el.addEventListener("mouseenter", onMouseEnterLink);
-            el.addEventListener("mouseleave", onMouseLeaveLink);
-        });
+        window.addEventListener("mousemove", onMouseMove, { passive: true });
+        window.addEventListener("mousedown", onMouseDown, { passive: true });
+        window.addEventListener("mouseup", onMouseUp, { passive: true });
+        window.addEventListener("mouseover", onMouseOver, { passive: true });
 
         animate();
 
         return () => {
+            if (animId) cancelAnimationFrame(animId);
             window.removeEventListener("mousemove", onMouseMove);
             window.removeEventListener("mousedown", onMouseDown);
             window.removeEventListener("mouseup", onMouseUp);
+            window.removeEventListener("mouseover", onMouseOver);
         };
     }, []);
 
