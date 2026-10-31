@@ -5,6 +5,7 @@ import Footer from "./components/Footer";
 import Cursor from "./components/Cursor";
 import BackToTop from "./components/BackToTop";
 import Arcade from "./components/Arcade/Arcade";
+import Particle from "./components/Particle";
 
 // Lazy Loaded Components for Code Splitting
 const Home = lazy(() => import("./components/Home/Home"));
@@ -32,6 +33,7 @@ function App() {
       <Preloader load={load} />
       <div className="App" id={load ? "no-scroll" : "scroll"}>
         <Navbar />
+        <Particle />
         <div className="main-content">
           <Suspense fallback={<Preloader load={true} />}>
             <div id="home"><Home /></div>
