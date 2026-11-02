@@ -34,10 +34,7 @@ function App() {
       <Cursor />
       <Preloader load={load} />
       <div className="App" id={load ? "no-scroll" : "scroll"}>
-        <Navbar 
-          gameMode={gameMode} 
-          onToggleGameMode={() => setGameMode((prev) => !prev)} 
-        />
+        <Navbar />
         <Particle />
         <div className="main-content">
           <Suspense fallback={<Preloader load={true} />}>
