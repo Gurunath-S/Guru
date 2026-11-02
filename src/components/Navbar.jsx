@@ -5,7 +5,7 @@ import Container from "react-bootstrap/Container";
 
 
 
-function NavBar() {
+function NavBar({ gameMode = false, onToggleGameMode = () => {} }) {
   const [expand, updateExpanded] = useState(false);
   const [navColour, updateNavbar] = useState(false);
 
@@ -43,7 +43,7 @@ function NavBar() {
           <span></span>
         </Navbar.Toggle>
         <Navbar.Collapse id="responsive-navbar-nav">
-          <Nav className="ms-auto" defaultActiveKey="#home">
+          <Nav className="ms-auto align-items-md-center" defaultActiveKey="#home">
             <Nav.Item>
               <Nav.Link href="#home" onClick={() => updateExpanded(false)}>
                 Home
@@ -64,13 +64,23 @@ function NavBar() {
                 Contact
               </Nav.Link>
             </Nav.Item>
-            <Nav.Item>
-              <Nav.Link 
-                href="#arcade" 
-                onClick={() => updateExpanded(false)}
+            <Nav.Item className="ms-md-3 my-2 my-md-0">
+              <button
+                type="button"
+                className={`game-mode-nav-btn ${gameMode ? "active" : ""}`}
+                onClick={() => {
+                  onToggleGameMode();
+                  updateExpanded(false);
+                }}
+                title={gameMode ? "Exit Game Mode" : "Activate Game Mode"}
+                aria-label="Toggle Game Mode"
               >
-                Space Mission 🚀
-              </Nav.Link>
+                <span className="game-mode-icon">🎮</span>
+                <span className="game-mode-text">Game Mode</span>
+                <span className={`game-mode-badge ${gameMode ? "on" : "off"}`}>
+                  {gameMode ? "ON" : "OFF"}
+                </span>
+              </button>
             </Nav.Item>
           </Nav>
         </Navbar.Collapse>
