@@ -15,10 +15,12 @@ const Contact = lazy(() => import("./components/Contact/Contact"));
 
 import "./style.css";
 import "./App.css";
+import "./components/Arcade/Arcade.css";
 import "bootstrap/dist/css/bootstrap.min.css";
 
 function App() {
   const [load, updateLoad] = useState(true);
+  const [gameMode, setGameMode] = useState(false);
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -32,19 +34,41 @@ function App() {
       <Cursor />
       <Preloader load={load} />
       <div className="App" id={load ? "no-scroll" : "scroll"}>
-        <Navbar />
+        <Navbar 
+          gameMode={gameMode} 
+          onToggleGameMode={() => setGameMode((prev) => !prev)} 
+        />
         <Particle />
         <div className="main-content">
           <Suspense fallback={<Preloader load={true} />}>
             <div id="home"><Home /></div>
             <div id="about"><About /></div>
             <div id="projects"><Projects /></div>
-            <div id="arcade"><Arcade /></div>
             <div id="contact"><Contact /></div>
           </Suspense>
         </div>
         <Footer />
         <BackToTop />
+
+        {/* Global Game Mode Overlay Experience */}
+        <Arcade 
+          isOpen={gameMode} 
+          onClose={() => setGameMode(false)} 
+        />
+
+        {/* Quick Launch Floating Game Mode Button */}
+        {!gameMode && !load && (
+          <button
+            className="floating-game-mode-fab"
+            onClick={() => setGameMode(true)}
+            aria-label="Launch Game Mode"
+            title="Launch Cyber-Shooter Game Mode"
+          >
+            <span className="fab-icon">🎮</span>
+            <span className="fab-label">Game Mode</span>
+            <span className="fab-pulse-ring"></span>
+          </button>
+        )}
       </div>
     </>
   );
