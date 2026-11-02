@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
-import { FaRocket, FaHeart, FaVolumeUp, FaVolumeMute, FaTrophy, FaArrowLeft } from "react-icons/fa";
+import { FaHeart, FaVolumeUp, FaVolumeMute, FaTrophy, FaPause, FaPlay, FaRedo, FaTimes } from "react-icons/fa";
 import "./Arcade.css";
 
 // Web Audio API Synthesizer for retro sound effects
@@ -13,7 +13,6 @@ class SoundEngine {
     if (!this.ctx) {
       this.ctx = new (window.AudioContext || window.webkitAudioContext)();
     }
-    // Resume context if suspended (browser security)
     if (this.ctx && this.ctx.state === "suspended") {
       this.ctx.resume();
     }
@@ -161,16 +160,40 @@ class SoundEngine {
       console.warn("Audio failed", e);
     }
   }
+
+  playRevive() {
+    if (this.muted) return;
+    this.init();
+    try {
+      const now = this.ctx.currentTime;
+      [330, 440, 554, 659, 880].forEach((freq, idx) => {
+        const osc = this.ctx.createOscillator();
+        const gain = this.ctx.createGain();
+        osc.connect(gain);
+        gain.connect(this.ctx.destination);
+
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq, now + idx * 0.06);
+        gain.gain.setValueAtTime(0.12, now + idx * 0.06);
+        gain.gain.linearRampToValueAtTime(0.01, now + idx * 0.06 + 0.12);
+
+        osc.start(now + idx * 0.06);
+        osc.stop(now + idx * 0.06 + 0.12);
+      });
+    } catch (e) {
+      console.warn("Audio failed", e);
+    }
+  }
 }
 
 const sounds = new SoundEngine();
 
-export default function Arcade() {
+export default function Arcade({ isOpen = false, onClose = () => {} }) {
   const [highScore, setHighScore] = useState(() => {
     return parseInt(localStorage.getItem("astro_shooter_high_score") || "0", 10);
   });
 
-  const [gameState, setGameState] = useState("IDLE"); // IDLE, COUNTDOWN, PLAYING, GAMEOVER
+  const [gameState, setGameState] = useState("IDLE"); // IDLE, COUNTDOWN, PLAYING, PAUSED, REVIVE_PROMPT
   const [score, setScore] = useState(0);
   const [shield, setShield] = useState(100);
   const [muted, setMuted] = useState(false);
@@ -181,8 +204,9 @@ export default function Arcade() {
   const gameLoopId = useRef(null);
   const keysPressed = useRef({});
   const mousePos = useRef({ x: 0, y: 0 });
+  const invulnerableUntil = useRef(0);
 
-  // Game Engine state refs to avoid stale React state references in 60fps loop
+  // Game Engine state refs to avoid stale React state in 60fps loop
   const astronautRef = useRef({
     x: 0,
     y: 0,
@@ -191,7 +215,7 @@ export default function Arcade() {
     angle: 0,
     radius: 20,
     lastFired: 0,
-    fireRate: 200 // ms
+    fireRate: 190 // ms
   });
   const lasersRef = useRef([]);
   const bugsRef = useRef([]);
@@ -200,7 +224,7 @@ export default function Arcade() {
   const gameScoreRef = useRef(0);
   const gameShieldRef = useRef(100);
   const lastSpawnTime = useRef(0);
-  const spawnInterval = useRef(1500); // starts spawning every 1.5 seconds
+  const spawnInterval = useRef(1500);
   const lastReportedScore = useRef(0);
 
   // Initialize sounds muted state
@@ -208,9 +232,19 @@ export default function Arcade() {
     sounds.muted = muted;
   }, [muted]);
 
-  // Prevent scroll when playing
+  // Handle isOpen prop changes: launch immediately or close
   useEffect(() => {
-    if (gameState === "PLAYING" || gameState === "COUNTDOWN") {
+    if (isOpen) {
+      initiateGame();
+    } else {
+      cancelAnimationFrame(gameLoopId.current);
+      setGameState("IDLE");
+    }
+  }, [isOpen]);
+
+  // Prevent scroll when actively playing or countdown
+  useEffect(() => {
+    if (isOpen && (gameState === "PLAYING" || gameState === "COUNTDOWN")) {
       document.body.style.overflow = "hidden";
     } else {
       document.body.style.overflow = "";
@@ -218,14 +252,40 @@ export default function Arcade() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [gameState]);
+  }, [isOpen, gameState]);
 
   // Bind keyboard inputs
   useEffect(() => {
     const handleKeyDown = (e) => {
+      if (!isOpen) return;
+
+      const key = e.key.toLowerCase();
+
+      // Pause toggle with Escape or 'p'
+      if (key === "escape" || key === "p") {
+        if (gameState === "PLAYING") {
+          e.preventDefault();
+          cancelAnimationFrame(gameLoopId.current);
+          setGameState("PAUSED");
+          return;
+        } else if (gameState === "PAUSED") {
+          e.preventDefault();
+          handleResume();
+          return;
+        }
+      }
+
+      // Quick continue with Spacebar or Enter when shield depleted
+      if (gameState === "REVIVE_PROMPT" && (key === " " || key === "enter")) {
+        e.preventDefault();
+        handleContinue();
+        return;
+      }
+
       if (gameState !== "PLAYING") return;
-      keysPressed.current[e.key.toLowerCase()] = true;
-      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(e.key.toLowerCase())) {
+
+      keysPressed.current[key] = true;
+      if (["arrowup", "arrowdown", "arrowleft", "arrowright", " "].includes(key)) {
         e.preventDefault();
       }
     };
@@ -240,7 +300,7 @@ export default function Arcade() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("keyup", handleKeyUp);
     };
-  }, [gameState]);
+  }, [isOpen, gameState]);
 
   // Track mouse coordinates
   useEffect(() => {
@@ -249,7 +309,7 @@ export default function Arcade() {
     };
 
     const handleMouseDown = () => {
-      if (gameState === "PLAYING") {
+      if (isOpen && gameState === "PLAYING") {
         fireLaser();
       }
     };
@@ -260,7 +320,7 @@ export default function Arcade() {
       window.removeEventListener("mousemove", handleMouseMove);
       window.removeEventListener("mousedown", handleMouseDown);
     };
-  }, [gameState]);
+  }, [isOpen, gameState]);
 
   // Handle countdown logic before starting the game
   useEffect(() => {
@@ -283,7 +343,7 @@ export default function Arcade() {
           return prev - 1;
         }
       });
-    }, 1000);
+    }, 800);
 
     return () => clearInterval(interval);
   }, [gameState]);
@@ -296,6 +356,7 @@ export default function Arcade() {
     astronautRef.current.vx = 0;
     astronautRef.current.vy = 0;
     astronautRef.current.angle = 0;
+    invulnerableUntil.current = performance.now() + 2500; // brief invulnerability at start
 
     lasersRef.current = [];
     bugsRef.current = [];
@@ -303,7 +364,7 @@ export default function Arcade() {
     gameScoreRef.current = 0;
     lastReportedScore.current = 0;
     gameShieldRef.current = 100;
-    spawnInterval.current = 1500;
+    spawnInterval.current = 1400;
     lastSpawnTime.current = performance.now();
 
     setScore(0);
@@ -326,6 +387,40 @@ export default function Arcade() {
     setGameState("COUNTDOWN");
   };
 
+  const handleContinue = () => {
+    sounds.playRevive();
+    gameShieldRef.current = 100;
+    setShield(100);
+    invulnerableUntil.current = performance.now() + 3500; // 3.5s shield barrier
+
+    // Vaporize bugs directly on top of astronaut
+    const astro = astronautRef.current;
+    bugsRef.current = bugsRef.current.filter((bug) => {
+      const dx = bug.x - astro.x;
+      const dy = bug.y - astro.y;
+      return Math.sqrt(dx * dx + dy * dy) > 160;
+    });
+
+    setGameState("PLAYING");
+    startGameLoop();
+  };
+
+  const handlePause = () => {
+    cancelAnimationFrame(gameLoopId.current);
+    setGameState("PAUSED");
+  };
+
+  const handleResume = () => {
+    setGameState("PLAYING");
+    startGameLoop();
+  };
+
+  const handleExit = () => {
+    cancelAnimationFrame(gameLoopId.current);
+    setGameState("IDLE");
+    if (onClose) onClose();
+  };
+
   const fireLaser = () => {
     const astro = astronautRef.current;
     const now = performance.now();
@@ -339,7 +434,7 @@ export default function Arcade() {
     const dy = mousePos.current.y - astro.y;
     const angle = Math.atan2(dy, dx);
 
-    const laserSpeed = 12;
+    const laserSpeed = 13;
     lasersRef.current.push({
       x: astro.x + Math.cos(angle) * astro.radius,
       y: astro.y + Math.sin(angle) * astro.radius,
@@ -349,7 +444,7 @@ export default function Arcade() {
       radius: 4
     });
 
-    // Spawn tiny muzzle flash particles
+    // Tiny muzzle flash particles
     for (let i = 0; i < 3; i++) {
       particlesRef.current.push({
         x: astro.x + Math.cos(angle) * astro.radius,
@@ -368,24 +463,22 @@ export default function Arcade() {
     const width = window.innerWidth;
     const height = window.innerHeight;
 
-    // Pick a random edge to spawn the bug off-screen
     const edge = Math.floor(Math.random() * 4);
     let x, y;
-    if (edge === 0) { // Top
+    if (edge === 0) {
       x = Math.random() * width;
       y = -40;
-    } else if (edge === 1) { // Right
+    } else if (edge === 1) {
       x = width + 40;
       y = Math.random() * height;
-    } else if (edge === 2) { // Bottom
+    } else if (edge === 2) {
       x = Math.random() * width;
       y = height + 40;
-    } else { // Left
+    } else {
       x = -40;
       y = Math.random() * height;
     }
 
-    // Bug items representing errors
     const errorTypes = [
       { text: "SyntaxError", color: "#ff4d4d", points: 20 },
       { text: "404 NotFound", color: "#ff9900", points: 30 },
@@ -397,7 +490,6 @@ export default function Arcade() {
 
     const type = errorTypes[Math.floor(Math.random() * errorTypes.length)];
 
-    // Travel direction generally towards the center of the viewport
     const targetX = width / 2 + (Math.random() - 0.5) * (width * 0.5);
     const targetY = height / 2 + (Math.random() - 0.5) * (height * 0.5);
     const angle = Math.atan2(targetY - y, targetX - x);
@@ -411,7 +503,7 @@ export default function Arcade() {
       text: type.text,
       color: type.color,
       points: type.points,
-      radius: Math.max(type.text.length * 4.5, 18), // collision bounding box
+      radius: Math.max(type.text.length * 4.5, 18),
       angle: Math.random() * Math.PI * 2,
       rotationSpeed: (Math.random() - 0.5) * 0.03
     });
@@ -419,7 +511,6 @@ export default function Arcade() {
 
   const createExplosion = (x, y, color) => {
     sounds.playExplosion();
-    // Cap total active particles to prevent lag
     if (particlesRef.current.length > 70) return;
     for (let i = 0; i < 8; i++) {
       const angle = Math.random() * Math.PI * 2;
@@ -445,7 +536,7 @@ export default function Arcade() {
 
   const triggerGameOver = () => {
     sounds.playGameOver();
-    setGameState("GAMEOVER");
+    setGameState("REVIVE_PROMPT");
     cancelAnimationFrame(gameLoopId.current);
 
     if (gameScoreRef.current > highScore) {
@@ -458,12 +549,11 @@ export default function Arcade() {
     const canvas = canvasRef.current;
     if (!canvas) return;
 
-    // Size canvas to exact viewport bounds
     canvas.width = window.innerWidth;
     canvas.height = window.innerHeight;
     const ctx = canvas.getContext("2d");
 
-    const loop = (timestamp) => {
+    const loop = () => {
       updateGame();
       drawGame(ctx);
       gameLoopId.current = requestAnimationFrame(loop);
@@ -473,22 +563,19 @@ export default function Arcade() {
   };
 
   const updateGame = () => {
-    // 1. Spawning - bounded to prevent infinite enemy accumulation
     const now = performance.now();
     const MAX_BUGS = 18;
-    const dynamicInterval = Math.max(550, spawnInterval.current - (gameScoreRef.current * 1.5));
+    const dynamicInterval = Math.max(500, spawnInterval.current - (gameScoreRef.current * 1.5));
     if (bugsRef.current.length < MAX_BUGS && now - lastSpawnTime.current > dynamicInterval) {
       spawnBug();
       lastSpawnTime.current = now;
     }
 
-    // 2. Astronaut Physics
     const astro = astronautRef.current;
-    const accel = 0.4;
+    const accel = 0.42;
     const damping = 0.94;
-    const maxSpeed = 7;
+    const maxSpeed = 7.5;
 
-    // Movement inputs (WASD / Arrows)
     const keys = keysPressed.current;
     let thrusting = false;
     if (keys["w"] || keys["arrowup"]) {
@@ -508,22 +595,18 @@ export default function Arcade() {
       thrusting = true;
     }
 
-    // Apply drag
     astro.vx *= damping;
     astro.vy *= damping;
 
-    // Clamp speed limits
     const speed = Math.sqrt(astro.vx * astro.vx + astro.vy * astro.vy);
     if (speed > maxSpeed) {
       astro.vx = (astro.vx / speed) * maxSpeed;
       astro.vy = (astro.vy / speed) * maxSpeed;
     }
 
-    // Update position
     astro.x += astro.vx;
     astro.y += astro.vy;
 
-    // Clamp to viewport borders with slight rebound
     const padding = astro.radius + 10;
     if (astro.x < padding) {
       astro.x = padding;
@@ -542,7 +625,6 @@ export default function Arcade() {
       astro.vy *= -0.5;
     }
 
-    // Rotate astronaut face to look at mouse pointer
     const dx = mousePos.current.x - astro.x;
     const dy = mousePos.current.y - astro.y;
     astro.angle = Math.atan2(dy, dx);
@@ -567,7 +649,6 @@ export default function Arcade() {
       });
     }
 
-    // 3. Update stars parallax effect
     starsRef.current.forEach((star) => {
       star.x -= star.speed * (astro.vx * 0.1 + 0.5);
       if (star.x < 0) {
@@ -576,11 +657,9 @@ export default function Arcade() {
       }
     });
 
-    // 4. Update lasers
     lasersRef.current = lasersRef.current.filter((laser) => {
       laser.x += laser.vx;
       laser.y += laser.vy;
-
       return (
         laser.x >= 0 &&
         laser.x <= window.innerWidth &&
@@ -589,7 +668,6 @@ export default function Arcade() {
       );
     });
 
-    // 5. Update particles
     particlesRef.current = particlesRef.current.filter((p) => {
       p.x += p.vx;
       p.y += p.vy;
@@ -597,14 +675,12 @@ export default function Arcade() {
       return p.life > 0;
     });
 
-    // 6. Update bugs and collision checks
     const activeLasers = lasersRef.current;
     bugsRef.current = bugsRef.current.filter((bug) => {
       bug.x += bug.vx;
       bug.y += bug.vy;
       bug.angle += bug.rotationSpeed;
 
-      // Check laser collision using squared distances (no Math.sqrt) with early exit
       let hit = false;
       for (let i = 0; i < activeLasers.length; i++) {
         const laser = activeLasers[i];
@@ -614,7 +690,7 @@ export default function Arcade() {
         const rSum = bug.radius + laser.radius;
         if (ldx * ldx + ldy * ldy < rSum * rSum) {
           hit = true;
-          laser.x = -9999; // destroy laser
+          laser.x = -9999;
           break;
         }
       }
@@ -622,14 +698,21 @@ export default function Arcade() {
       if (hit) {
         createExplosion(bug.x, bug.y, bug.color);
         gameScoreRef.current += bug.points;
-        return false; // remove bug
+        return false;
       }
 
-      // Check astronaut collision using squared distances
       const adx = astro.x - bug.x;
       const ady = astro.y - bug.y;
       const aSum = bug.radius + astro.radius;
       if (adx * adx + ady * ady < aSum * aSum) {
+        // If invulnerable shield active, vaporize bug without taking damage
+        if (performance.now() < invulnerableUntil.current) {
+          createExplosion(bug.x, bug.y, "#00ffcc");
+          sounds.playHit();
+          gameScoreRef.current += bug.points;
+          return false;
+        }
+
         createExplosion(bug.x, bug.y, "#ff3333");
         triggerDamage();
 
@@ -639,10 +722,9 @@ export default function Arcade() {
         if (gameShieldRef.current <= 0) {
           triggerGameOver();
         }
-        return false; // remove bug
+        return false;
       }
 
-      // Keep if on-screen or close to boundaries
       return (
         bug.x >= -100 &&
         bug.x <= window.innerWidth + 100 &&
@@ -651,7 +733,6 @@ export default function Arcade() {
       );
     });
 
-    // Throttled HUD score sync (max once per frame, preventing React re-render thrashing)
     if (lastReportedScore.current !== gameScoreRef.current) {
       lastReportedScore.current = gameScoreRef.current;
       setScore(gameScoreRef.current);
@@ -659,11 +740,10 @@ export default function Arcade() {
   };
 
   const drawGame = (ctx) => {
-    // Clear screen with a semitransparent overlay to get beautiful neon light tracers
-    ctx.fillStyle = "rgba(10, 4, 22, 0.4)";
+    ctx.fillStyle = "rgba(10, 4, 22, 0.45)";
     ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
 
-    // 1. Draw Starfield Parallax (Zero string allocations)
+    // 1. Draw Starfield Parallax
     ctx.fillStyle = "#ffffff";
     for (let i = 0; i < starsRef.current.length; i++) {
       const star = starsRef.current[i];
@@ -674,7 +754,7 @@ export default function Arcade() {
     }
     ctx.globalAlpha = 1.0;
 
-    // 2. Draw Lasers (Bright core with vibrant neon aura, 0 shadowBlur)
+    // 2. Draw Lasers
     for (let i = 0; i < lasersRef.current.length; i++) {
       const laser = lasersRef.current[i];
       ctx.save();
@@ -688,7 +768,7 @@ export default function Arcade() {
       ctx.restore();
     }
 
-    // 3. Draw Bugs (floating text errors with retro cyber-badges, 0 shadowBlur Gaussian overhead)
+    // 3. Draw Bugs (floating text errors with retro cyber-badges)
     ctx.font = "bold 14px monospace";
     ctx.textAlign = "center";
     ctx.textBaseline = "middle";
@@ -699,23 +779,20 @@ export default function Arcade() {
       ctx.translate(bug.x, bug.y);
       ctx.rotate(bug.angle);
 
-      // Cyberpunk translucent badge background
       ctx.fillStyle = "rgba(10, 4, 25, 0.88)";
       ctx.fillRect(-bug.radius, -12, bug.radius * 2, 24);
 
-      // Neon error border
       ctx.strokeStyle = bug.color;
       ctx.lineWidth = 1.5;
       ctx.strokeRect(-bug.radius, -12, bug.radius * 2, 24);
 
-      // Error text
       ctx.fillStyle = bug.color;
       ctx.fillText(bug.text, 0, 0);
 
       ctx.restore();
     }
 
-    // 4. Draw Particles (Direct GPU circles, 0 shadowBlur)
+    // 4. Draw Particles
     for (let i = 0; i < particlesRef.current.length; i++) {
       const p = particlesRef.current[i];
       ctx.fillStyle = p.color;
@@ -742,144 +819,197 @@ export default function Arcade() {
     ctx.arc(-2, 0, 14, 0, Math.PI * 2);
     ctx.fill();
 
-    // Helmet visor (Dark faceplate)
+    // Helmet visor
     ctx.fillStyle = "#2d1950";
     ctx.beginPath();
     ctx.arc(4, 0, 10, 0, Math.PI * 2);
     ctx.fill();
 
-    // Visor Glass with cyan reflection
+    // Visor Glass reflection
     ctx.fillStyle = "#00ffcc";
     ctx.beginPath();
     ctx.ellipse(6, 0, 5, 8, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // Thruster nozzles (Rear)
+    // Thruster nozzles
     ctx.fillStyle = "#333333";
     ctx.fillRect(-24, -6, 2, 4);
     ctx.fillRect(-24, 2, 2, 4);
 
     ctx.restore();
+
+    // 6. Forcefield / Invulnerability shield aura
+    if (performance.now() < invulnerableUntil.current) {
+      const pulse = (Math.sin(performance.now() * 0.015) + 1) / 2;
+      ctx.save();
+      ctx.strokeStyle = `rgba(0, 255, 204, ${0.6 + pulse * 0.4})`;
+      ctx.lineWidth = 3;
+      ctx.shadowColor = "#00ffcc";
+      ctx.shadowBlur = 15;
+      ctx.beginPath();
+      ctx.arc(astro.x, astro.y, astro.radius + 14 + pulse * 4, 0, Math.PI * 2);
+      ctx.stroke();
+
+      // Outer ripple
+      ctx.strokeStyle = `rgba(199, 112, 240, ${0.4 + pulse * 0.3})`;
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(astro.x, astro.y, astro.radius + 20 + pulse * 6, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+    }
   };
 
-  const handleExit = () => {
-    cancelAnimationFrame(gameLoopId.current);
-    setGameState("IDLE");
-  };
+  // If not open, render absolutely nothing!
+  if (!isOpen) return null;
 
   return (
-    <div className="arcade-section-container">
-      {/* Inline Space Mission Launcher Dashboard */}
-      {gameState === "IDLE" && (
-        <div className="space-terminal">
-          <div className="terminal-glitch-border"></div>
-          <div className="terminal-header">
-            <FaRocket className="rocket-icon" />
-            <h3>SPACE MISSION TERMINAL v2.5</h3>
-          </div>
+    <div className={`space-game-overlay ${screenShake ? "shake-effect" : ""}`}>
+      {/* Interactive Game Canvas */}
+      <canvas ref={canvasRef} className="space-game-canvas" />
 
-          <div className="terminal-body">
-            <p className="terminal-desc">
-              An astronaut is lost in cyberspace! Clean up code-leaks, compiler warnings, and floating bugs that are drifting across the portfolio layout.
-            </p>
-            <div className="terminal-stats">
-              <div className="stat-card">
-                <FaTrophy className="stat-icon trophy" />
-                <div className="stat-info">
-                  <span className="stat-label">RECORD HIGH SCORE</span>
-                  <span className="stat-value neon-purple">{highScore} PTS</span>
-                </div>
+      {/* Countdown timer */}
+      {gameState === "COUNTDOWN" && (
+        <div className="countdown-overlay">
+          <span className="countdown-num">{countdown === 0 ? "LAUNCH!" : countdown}</span>
+          <p className="countdown-hint">WASD to Move • Mouse to Aim • Click to Fire</p>
+        </div>
+      )}
+
+      {/* Active Game HUD */}
+      {gameState === "PLAYING" && (
+        <>
+          <div className="game-hud-panel">
+            <div className="hud-metric">
+              <span className="hud-title">SCORE:</span>
+              <span className="hud-metric-value text-cyan">{score}</span>
+            </div>
+
+            <div className="hud-metric d-none d-sm-flex">
+              <span className="hud-title"><FaTrophy className="hud-trophy-icon" /> HIGH:</span>
+              <span className="hud-metric-value neon-purple">{highScore}</span>
+            </div>
+
+            <div className="hud-shield-container">
+              <span className="hud-title"><FaHeart className="heart-icon" /> SHIELD:</span>
+              <div className="shield-bar-bg">
+                <div 
+                  className={`shield-bar-fill ${shield <= 20 ? "shield-critical" : shield <= 60 ? "shield-warning" : ""}`} 
+                  style={{ width: `${shield}%` }}
+                ></div>
               </div>
             </div>
 
-            <div className="controls-guide">
-              <h5>MISSION CONTROLS</h5>
-              <ul>
-                <li><span>WASD / Arrow Keys</span>: Floating Movement (drift inertia)</li>
-                <li><span>Mouse Movement</span>: Aim Laser Guns</li>
-                <li><span>Left Click / Spacebar</span>: Fire Laser Cannon</li>
-              </ul>
+            <div className="hud-buttons">
+              <button 
+                className="hud-control-btn" 
+                onClick={handlePause}
+                title="Pause Game (ESC / P)"
+                aria-label="Pause Game"
+              >
+                <FaPause />
+              </button>
+
+              <button 
+                className="hud-control-btn" 
+                onClick={() => setMuted(!muted)}
+                title={muted ? "Unmute Audio" : "Mute Audio"}
+                aria-label={muted ? "Unmute" : "Mute"}
+              >
+                {muted ? <FaVolumeMute /> : <FaVolumeUp />}
+              </button>
+
+              <button 
+                className="exit-mission-btn" 
+                onClick={handleExit}
+                title="Exit Game Mode"
+              >
+                <FaTimes className="me-1" /> EXIT
+              </button>
+            </div>
+          </div>
+
+          <div className="hud-controls-helper">
+            <span>WASD / Arrows</span>: Move • <span>Mouse</span>: Aim • <span>Click / Space</span>: Fire • <span>P / ESC</span>: Pause
+          </div>
+        </>
+      )}
+
+      {/* Paused Screen Overlay */}
+      {gameState === "PAUSED" && (
+        <div className="gameover-overlay">
+          <div className="gameover-box pause-box">
+            <h2 className="pause-title">MISSION PAUSED</h2>
+            <p className="pause-desc">Cyber-space is on standby. Your score and position are locked.</p>
+            
+            <div className="gameover-stats">
+              <div className="gameover-stat">
+                <span>SCORE:</span>
+                <span className="score-val text-cyan">{score} PTS</span>
+              </div>
+              <div className="gameover-stat">
+                <span>RECORD:</span>
+                <span className="score-val neon-purple">{highScore} PTS</span>
+              </div>
             </div>
 
-            <button className="launch-mission-btn" onClick={initiateGame}>
-              LAUNCH SPACE MISSION
-            </button>
+            <div className="continue-actions">
+              <button className="continue-mission-btn pulse-glow" onClick={handleResume}>
+                <FaPlay className="me-2" /> RESUME MISSION
+              </button>
+              <div className="secondary-actions">
+                <button className="retry-btn" onClick={initiateGame}>
+                  <FaRedo className="me-1" /> RESTART
+                </button>
+                <button className="exit-btn" onClick={handleExit}>
+                  <FaTimes className="me-1" /> EXIT GAME
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
 
-      {/* Global Full-Screen Game Overlay */}
-      {(gameState === "COUNTDOWN" || gameState === "PLAYING" || gameState === "GAMEOVER") && (
-        <div className={`space-game-overlay ${screenShake ? "shake-effect" : ""}`}>
-          
-          {/* Transparent Canvas Layer */}
-          <canvas ref={canvasRef} className="space-game-canvas" />
-
-          {/* Countdown timer */}
-          {gameState === "COUNTDOWN" && (
-            <div className="countdown-overlay">
-              <span className="countdown-num">{countdown === 0 ? "LAUNCH!" : countdown}</span>
+      {/* Shield Depleted / Continue Prompt Overlay */}
+      {gameState === "REVIVE_PROMPT" && (
+        <div className="gameover-overlay">
+          <div className="gameover-box continue-box">
+            <div className="alert-badge">CYBER-SYSTEM WARNING</div>
+            <h1 className="error-title">SHIELD DEPLETED!</h1>
+            <p className="error-desc">
+              Astronaut took heavy cyber-damage. Restore full shields now and continue your mission streak!
+            </p>
+            
+            <div className="gameover-stats">
+              <div className="gameover-stat">
+                <span>CURRENT SCORE:</span>
+                <span className="score-val text-cyan">{score} PTS</span>
+              </div>
+              <div className="gameover-stat">
+                <span>RECORD HIGH:</span>
+                <span className="score-val neon-purple">{highScore} PTS</span>
+              </div>
+              {score >= highScore && score > 0 && (
+                <div className="new-record-tag">★ NEW RECORD ESTABLISHED! ★</div>
+              )}
             </div>
-          )}
 
-          {/* Interactive HUD HUD */}
-          {gameState === "PLAYING" && (
-            <div className="game-hud-panel">
-              <div className="hud-metric">
-                <span className="hud-title">SCORE:</span>
-                <span className="hud-metric-value text-cyan">{score}</span>
-              </div>
+            <div className="continue-actions">
+              <button className="continue-mission-btn pulse-glow" onClick={handleContinue}>
+                ⚡ CONTINUE MISSION
+                <span className="continue-subtext">Restores 100% Shield + 3.5s Forcefield • Keeps Score</span>
+              </button>
 
-              <div className="hud-shield-container">
-                <span className="hud-title"><FaHeart className="heart-icon" /> SHIELD:</span>
-                <div className="shield-bar-bg">
-                  <div className="shield-bar-fill" style={{ width: `${shield}%` }}></div>
-                </div>
-              </div>
-
-              <div className="hud-buttons">
-                <button 
-                  className="hud-audio-btn" 
-                  onClick={() => setMuted(!muted)}
-                  aria-label={muted ? "Unmute" : "Mute"}
-                >
-                  {muted ? <FaVolumeMute /> : <FaVolumeUp />}
+              <div className="secondary-actions">
+                <button className="retry-btn" onClick={initiateGame}>
+                  <FaRedo className="me-1" /> NEW RUN
                 </button>
-                <button className="exit-mission-btn" onClick={handleExit}>
-                  EXIT MISSION
+                <button className="exit-btn" onClick={handleExit}>
+                  <FaTimes className="me-1" /> EXIT GAME
                 </button>
               </div>
             </div>
-          )}
-
-          {/* Retro Game Over screen */}
-          {gameState === "GAMEOVER" && (
-            <div className="gameover-overlay">
-              <div className="gameover-box">
-                <h1 className="error-title">CRITICAL ERROR</h1>
-                <p className="error-desc">Astronaut shield fully depleted. Cyber-bugs took over.</p>
-                
-                <div className="gameover-stats">
-                  <div className="gameover-stat">
-                    <span>FINAL SCORE:</span>
-                    <span className="score-val text-cyan">{score}</span>
-                  </div>
-                  {score >= highScore && score > 0 && (
-                    <div className="new-record-tag">NEW RECORD ESTABLISHED!</div>
-                  )}
-                </div>
-
-                <div className="gameover-actions">
-                  <button className="retry-btn" onClick={initiateGame}>
-                    RETRY MISSION
-                  </button>
-                  <button className="exit-btn" onClick={handleExit}>
-                    CLOSE CONSOLE
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       )}
     </div>
