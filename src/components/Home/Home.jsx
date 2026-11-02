@@ -54,7 +54,7 @@ function Home() {
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ duration: 0.6, delay: 0.35 }}
                 >
-                  I'm a Software Engineer and Full Stack Developer based in India, currently working at a startup where I build and maintain real-world applications. I enjoy working across different technologies and continuously learning to create scalable and impactful products.
+                  I'm a Full-Stack Engineer based in India, currently working at a startup where I build and maintain real-world applications. I enjoy working across different technologies and continuously learning to create scalable and impactful products.
                 </motion.p>
               </motion.div>
             </Col>
